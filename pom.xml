@@ -20,7 +20,7 @@
         <module>infra-valkey</module>
         <module>infra-client-api</module>
         <module>infra-dynamodb</module>
-        <module>application</module>
+        <module>spring-app</module>
     </modules>
 
     <properties>
@@ -36,6 +36,7 @@
         <jakarta.inject.version>2.0.1</jakarta.inject.version>
         <testcontainers.version>1.20.6</testcontainers.version>
         <spring-cloud-aws.version>3.3.0</spring-cloud-aws.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
         <instancio.version>5.3.0</instancio.version>
     </properties>
 
@@ -86,6 +87,15 @@
                 <scope>test</scope>
             </dependency>
 
+            <!-- Spring Cloud BOM (OpenFeign) -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <!-- Spring Cloud AWS BOM -->
             <dependency>
                 <groupId>io.awspring.cloud</groupId>
@@ -129,6 +139,11 @@
             <dependency>
                 <groupId>com.mycompany.template</groupId>
                 <artifactId>infra-dynamodb</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mycompany.template</groupId>
+                <artifactId>spring-app</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
