@@ -16,14 +16,40 @@
 
   "replaceTokens": [
     { "token": "com.mycompany.template", "description": "Base Java package and Maven groupId" },
-    { "token": "java-hexagonal-template", "description": "Root Maven artifactId and project folder name" },
-    { "token": "hexagonal_db",            "description": "PostgreSQL database name" },
-    { "token": "hexagonal-template-group","description": "Kafka consumer group-id" }
+    { "token": "com.mycompany",          "description": "Parent package (NAMESPACE_ROOT) — replace when NAMESPACE has depth > 2" },
+    { "token": "java-hexagonal-template","description": "Root Maven artifactId, project folder name, and spring.application.name" },
+    { "token": "hexagonal_db",           "description": "PostgreSQL database name in application.yml" },
+    { "token": "hexagonal-template-group","description": "Kafka consumer group-id in application.yml" }
   ],
+
+  "capabilities": {
+    "appTypes": ["api", "worker"],
+    "protocols": {
+      "applicableWhen": "appType = api",
+      "options": ["rest"]
+    },
+    "brokers": {
+      "applicableWhen": "appType = worker",
+      "options": ["kafka", "sqs"],
+      "note": "sqs uses infra-kafka as base with SQS adapter substitution"
+    },
+    "databases": {
+      "options": ["postgres", "dynamodb", "none"],
+      "note": "postgres and dynamodb are mutually exclusive at runtime — selecting both includes both modules but requires profile isolation (--spring.profiles.active=dynamodb for DynamoDB, default for PostgreSQL). Recommend choosing one."
+    },
+    "caches": {
+      "options": ["server", "none"],
+      "note": "server = Redis/Valkey via infra-valkey. Local in-memory cache can be implemented inside core without a dedicated module."
+    },
+    "httpClients": {
+      "options": ["feign", "none"]
+    }
+  },
 
   "modules": [
     {
       "name": "core",
+      "always": true,
       "role": "Business rules — 100% framework-agnostic",
       "packaging": "jar",
       "allowedDependencies": ["jakarta.inject-api"],
@@ -37,7 +63,21 @@
       "keyClasses": ["User", "CreateUserUseCase", "FindUserUseCase", "UserRepositoryPort", "UserCachePort", "CreateUserUseCaseImpl", "FindUserUseCaseImpl"]
     },
     {
+      "name": "application",
+      "always": true,
+      "role": "Spring Boot bootstrapper — wires all modules, global config",
+      "allowedDependencies": ["infra-api", "infra-postgres", "infra-valkey", "infra-kafka", "infra-client-api", "infra-dynamodb", "spring-boot-starter-actuator"],
+      "packages": {
+        "application": "@SpringBootApplication entry point"
+      },
+      "keyClasses": ["Application"],
+      "criticalFiles": [
+        "application/src/main/resources/application.yml"
+      ]
+    },
+    {
       "name": "infra-api",
+      "includeWhen": "appType = api",
       "role": "Inbound REST adapter — Spring Web MVC",
       "allowedDependencies": ["core", "spring-boot-starter-web", "spring-boot-starter-validation", "mapstruct"],
       "packages": {
@@ -49,6 +89,7 @@
     },
     {
       "name": "infra-postgres",
+      "includeWhen": "database = postgres",
       "role": "Relational persistence adapter — Spring Data JPA + PostgreSQL",
       "allowedDependencies": ["core", "spring-boot-starter-data-jpa", "postgresql", "mapstruct", "lombok"],
       "packages": {
@@ -62,6 +103,7 @@
     },
     {
       "name": "infra-valkey",
+      "includeWhen": "cache = server",
       "role": "Cache adapter — Spring Data Redis (Valkey-compatible)",
       "allowedDependencies": ["core", "spring-boot-starter-data-redis"],
       "packages": {
@@ -76,6 +118,7 @@
     },
     {
       "name": "infra-kafka",
+      "includeWhen": "appType = worker AND broker = kafka OR broker = sqs",
       "role": "Async messaging — Spring Kafka consumers and producers",
       "allowedDependencies": ["core", "spring-kafka", "mapstruct"],
       "packages": {
@@ -91,6 +134,7 @@
     },
     {
       "name": "infra-dynamodb",
+      "includeWhen": "database = dynamodb",
       "role": "NoSQL persistence adapter — AWS DynamoDB (Spring Cloud AWS 3.3.0)",
       "allowedDependencies": ["core", "spring-cloud-aws-starter-dynamodb", "mapstruct"],
       "packages": {
@@ -100,10 +144,12 @@
       },
       "keyClasses": ["UserDynamoDbAdapter", "UserDynamoDbEntity", "UserDynamoDbMapper"],
       "profileIsolation": "dynamodb",
-      "note": "Activate with --spring.profiles.active=dynamodb. Conflicts with infra-postgres UserRepositoryAdapter when both active."
+      "exclusiveWith": ["infra-postgres"],
+      "note": "Activate with --spring.profiles.active=dynamodb. Cannot coexist with infra-postgres UserRepositoryAdapter at runtime — both implement UserRepositoryPort and Spring will fail to autowire without profile isolation."
     },
     {
       "name": "infra-client-api",
+      "includeWhen": "httpClient = feign",
       "role": "Outbound HTTP client integrations — OpenFeign",
       "allowedDependencies": ["core", "spring-cloud-starter-openfeign"],
       "packages": {
@@ -111,18 +157,6 @@
         "infra.client.feign.dto": "Response records from external services"
       },
       "keyClasses": ["ExternalUserClient", "ExternalUserResponse"]
-    },
-    {
-      "name": "application",
-      "role": "Spring Boot bootstrapper — wires all modules, global config",
-      "allowedDependencies": ["infra-api", "infra-postgres", "infra-valkey", "infra-kafka", "infra-client-api", "infra-dynamodb", "spring-boot-starter-actuator"],
-      "packages": {
-        "application": "@SpringBootApplication entry point"
-      },
-      "keyClasses": ["Application"],
-      "criticalFiles": [
-        "application/src/main/resources/application.yml"
-      ]
     }
   ],
 
