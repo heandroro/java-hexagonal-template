@@ -48,6 +48,7 @@
         <confluent.version>7.7.0</confluent.version>
         <avro.version>1.11.4</avro.version>
         <springdoc.version>2.8.4</springdoc.version>
+        <springwolf.version>2.4.0</springwolf.version>
     </properties>
 
     <repositories>
@@ -150,6 +151,18 @@
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
                 <version>${springdoc.version}</version>
+            </dependency>
+
+            <!-- Springwolf — AsyncAPI documentation for async/event-driven channels -->
+            <dependency>
+                <groupId>io.github.springwolf</groupId>
+                <artifactId>springwolf-stomp</artifactId>
+                <version>${springwolf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.springwolf</groupId>
+                <artifactId>springwolf-ui</artifactId>
+                <version>${springwolf.version}</version>
             </dependency>
 
             <!-- Internal modules -->
