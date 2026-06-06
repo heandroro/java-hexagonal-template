@@ -1,0 +1,15 @@
+{
+  "role": "Async messaging — Spring Kafka consumers and producers",
+  "includeWhen": "appType = worker AND broker = kafka OR broker = sqs",
+  "allowedDependencies": ["core", "spring-kafka", "mapstruct"],
+  "packages": {
+    "infra.kafka.listener": "Inbound @KafkaListener classes (*Listener) — no interface",
+    "infra.kafka.dto":      "Event payload records",
+    "infra.kafka.mapper":   "MapStruct mappers (Event Payload ↔ Core Domain)"
+  },
+  "keyClasses": ["UserEventListener", "UserEventPayload", "UserKafkaMapper"],
+  "config": {
+    "topicProperty": "app.kafka.topics.user-created",
+    "topicDefault": "user.created"
+  }
+}

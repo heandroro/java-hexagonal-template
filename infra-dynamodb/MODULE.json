@@ -1,0 +1,14 @@
+{
+  "role": "NoSQL persistence adapter — AWS DynamoDB (Spring Cloud AWS 3.3.0)",
+  "includeWhen": "database = dynamodb",
+  "allowedDependencies": ["core", "spring-cloud-aws-starter-dynamodb", "mapstruct"],
+  "packages": {
+    "infra.dynamodb.adapter": "Outbound adapters (*Adapter) implementing core *Port — active only on @Profile(\"dynamodb\")",
+    "infra.dynamodb.entity":  "DynamoDB @DynamoDbBean classes (mutable, no Lombok)",
+    "infra.dynamodb.mapper":  "MapStruct mappers (Core Domain ↔ DynamoDB Entity)"
+  },
+  "keyClasses": ["UserDynamoDbAdapter", "UserDynamoDbEntity", "UserDynamoDbMapper"],
+  "profileIsolation": "dynamodb",
+  "exclusiveWith": ["infra-postgres"],
+  "note": "Activate with --spring.profiles.active=dynamodb. Cannot coexist with infra-postgres at runtime — both implement UserRepositoryPort and Spring will fail to autowire without profile isolation."
+}

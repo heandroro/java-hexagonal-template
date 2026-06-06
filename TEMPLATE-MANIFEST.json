@@ -2,6 +2,7 @@
   "templateName": "java-hexagonal-template",
   "version": "1.0.0-SNAPSHOT",
   "description": "Flat multi-module Maven scaffold for Hexagonal Architecture with Spring Boot",
+
   "stack": {
     "language": "Java 21",
     "framework": "Spring Boot 3.5.0",
@@ -15,160 +16,34 @@
   },
 
   "replaceTokens": [
-    { "token": "com.mycompany.template", "description": "Base Java package and Maven groupId" },
-    { "token": "com.mycompany",          "description": "Parent package (NAMESPACE_ROOT) — replace when NAMESPACE has depth > 2" },
-    { "token": "java-hexagonal-template","description": "Root Maven artifactId, project folder name, and spring.application.name" },
-    { "token": "hexagonal_db",           "description": "PostgreSQL database name in application.yml" },
+    { "token": "com.mycompany.template",  "description": "Base Java package and Maven groupId" },
+    { "token": "com.mycompany",           "description": "Parent package — replace when namespace has depth > 2" },
+    { "token": "java-hexagonal-template", "description": "Root Maven artifactId, project folder name, spring.application.name" },
+    { "token": "hexagonal_db",            "description": "PostgreSQL database name in application.yml" },
     { "token": "hexagonal-template-group","description": "Kafka consumer group-id in application.yml" }
   ],
 
-  "capabilities": {
-    "appTypes": ["api", "worker"],
-    "protocols": {
-      "applicableWhen": "appType = api",
-      "options": ["rest"]
-    },
-    "brokers": {
-      "applicableWhen": "appType = worker",
-      "options": ["kafka", "sqs"],
-      "note": "sqs uses infra-kafka as base with SQS adapter substitution"
-    },
-    "databases": {
-      "options": ["postgres", "dynamodb", "none"],
-      "note": "postgres and dynamodb are mutually exclusive at runtime — selecting both includes both modules but requires profile isolation (--spring.profiles.active=dynamodb for DynamoDB, default for PostgreSQL). Recommend choosing one."
-    },
-    "caches": {
-      "options": ["server", "none"],
-      "note": "server = Redis/Valkey via infra-valkey. Local in-memory cache can be implemented inside core without a dedicated module."
-    },
-    "httpClients": {
-      "options": ["feign", "none"]
-    }
-  },
-
   "modules": [
-    {
-      "name": "core",
-      "always": true,
-      "role": "Business rules — 100% framework-agnostic",
-      "packaging": "jar",
-      "allowedDependencies": ["jakarta.inject-api"],
-      "forbiddenPackages": ["org.springframework.*", "jakarta.persistence.*", "com.fasterxml.jackson.*"],
-      "packages": {
-        "core.domain":    "Pure domain classes / records — zero annotations",
-        "core.ports.in":  "Inbound port interfaces (*UseCase)",
-        "core.ports.out": "Outbound port interfaces (*Port)",
-        "core.usecase":   "Use-case implementations (*UseCaseImpl) — @Named, single clean constructor"
-      },
-      "keyClasses": ["User", "CreateUserUseCase", "FindUserUseCase", "UserRepositoryPort", "UserCachePort", "CreateUserUseCaseImpl", "FindUserUseCaseImpl"]
-    },
-    {
-      "name": "application",
-      "always": true,
-      "role": "Spring Boot bootstrapper — wires all modules, global config",
-      "allowedDependencies": ["infra-api", "infra-postgres", "infra-valkey", "infra-kafka", "infra-client-api", "infra-dynamodb", "spring-boot-starter-actuator"],
-      "packages": {
-        "application": "@SpringBootApplication entry point"
-      },
-      "keyClasses": ["Application"],
-      "criticalFiles": [
-        "application/src/main/resources/application.yml"
-      ]
-    },
-    {
-      "name": "infra-api",
-      "includeWhen": "appType = api",
-      "role": "Inbound REST adapter — Spring Web MVC",
-      "allowedDependencies": ["core", "spring-boot-starter-web", "spring-boot-starter-validation", "mapstruct"],
-      "packages": {
-        "infra.api.controller": "Concrete REST controllers (*Controller) — no interface",
-        "infra.api.dto":        "Request/Response records",
-        "infra.api.mapper":     "MapStruct mappers (Request/Response DTO ↔ Core Domain)"
-      },
-      "keyClasses": ["UserController", "CreateUserRequest", "UserResponse", "UserApiMapper"]
-    },
-    {
-      "name": "infra-postgres",
-      "includeWhen": "database = postgres",
-      "role": "Relational persistence adapter — Spring Data JPA + PostgreSQL",
-      "allowedDependencies": ["core", "spring-boot-starter-data-jpa", "postgresql", "mapstruct", "lombok"],
-      "packages": {
-        "infra.postgres.adapter":    "Outbound adapters (*Adapter) implementing core *Port",
-        "infra.postgres.entity":     "JPA @Entity classes",
-        "infra.postgres.repository": "Spring Data JpaRepository interfaces",
-        "infra.postgres.mapper":     "MapStruct mappers (Core Domain ↔ JPA Entity)"
-      },
-      "keyClasses": ["UserRepositoryAdapter", "UserEntity", "UserJpaRepository", "UserPostgresMapper"],
-      "note": "Only module that uses Lombok — required for mutable JPA entity boilerplate"
-    },
-    {
-      "name": "infra-valkey",
-      "includeWhen": "cache = server",
-      "role": "Cache adapter — Spring Data Redis (Valkey-compatible)",
-      "allowedDependencies": ["core", "spring-boot-starter-data-redis"],
-      "packages": {
-        "infra.valkey.adapter": "Outbound cache adapters (*Adapter) implementing core *Port"
-      },
-      "keyClasses": ["UserCacheAdapter"],
-      "config": {
-        "ttlProperty": "app.cache.user.ttl",
-        "ttlDefault": "PT30M",
-        "ttlEnvVar": "USER_CACHE_TTL"
-      }
-    },
-    {
-      "name": "infra-kafka",
-      "includeWhen": "appType = worker AND broker = kafka OR broker = sqs",
-      "role": "Async messaging — Spring Kafka consumers and producers",
-      "allowedDependencies": ["core", "spring-kafka", "mapstruct"],
-      "packages": {
-        "infra.kafka.listener": "Inbound @KafkaListener classes (*Listener) — no interface",
-        "infra.kafka.dto":      "Event payload records",
-        "infra.kafka.mapper":   "MapStruct mappers (Event Payload ↔ Core Domain)"
-      },
-      "keyClasses": ["UserEventListener", "UserEventPayload", "UserKafkaMapper"],
-      "config": {
-        "topicProperty": "app.kafka.topics.user-created",
-        "topicDefault": "user.created"
-      }
-    },
-    {
-      "name": "infra-dynamodb",
-      "includeWhen": "database = dynamodb",
-      "role": "NoSQL persistence adapter — AWS DynamoDB (Spring Cloud AWS 3.3.0)",
-      "allowedDependencies": ["core", "spring-cloud-aws-starter-dynamodb", "mapstruct"],
-      "packages": {
-        "infra.dynamodb.adapter": "Outbound adapters (*Adapter) implementing core *Port — active only on @Profile(\"dynamodb\")",
-        "infra.dynamodb.entity":  "DynamoDB @DynamoDbBean classes (mutable, no Lombok)",
-        "infra.dynamodb.mapper":  "MapStruct mappers (Core Domain ↔ DynamoDB Entity)"
-      },
-      "keyClasses": ["UserDynamoDbAdapter", "UserDynamoDbEntity", "UserDynamoDbMapper"],
-      "profileIsolation": "dynamodb",
-      "exclusiveWith": ["infra-postgres"],
-      "note": "Activate with --spring.profiles.active=dynamodb. Cannot coexist with infra-postgres UserRepositoryAdapter at runtime — both implement UserRepositoryPort and Spring will fail to autowire without profile isolation."
-    },
-    {
-      "name": "infra-client-api",
-      "includeWhen": "httpClient = feign",
-      "role": "Outbound HTTP client integrations — OpenFeign",
-      "allowedDependencies": ["core", "spring-cloud-starter-openfeign"],
-      "packages": {
-        "infra.client.feign":     "@FeignClient interfaces",
-        "infra.client.feign.dto": "Response records from external services"
-      },
-      "keyClasses": ["ExternalUserClient", "ExternalUserResponse"]
-    }
+    { "name": "core",            "always": true,                                           "manifest": "core/MODULE.json" },
+    { "name": "application",     "always": true,                                           "manifest": "application/MODULE.json" },
+    { "name": "infra-api",       "includeWhen": "appType = api",                           "manifest": "infra-api/MODULE.json" },
+    { "name": "infra-postgres",  "includeWhen": "database = postgres",                    "manifest": "infra-postgres/MODULE.json" },
+    { "name": "infra-dynamodb",  "includeWhen": "database = dynamodb",                    "manifest": "infra-dynamodb/MODULE.json" },
+    { "name": "infra-valkey",    "includeWhen": "cache = server",                         "manifest": "infra-valkey/MODULE.json" },
+    { "name": "infra-kafka",     "includeWhen": "appType = worker AND broker = kafka",     "manifest": "infra-kafka/MODULE.json" },
+    { "name": "infra-client-api","includeWhen": "httpClient = feign",                     "manifest": "infra-client-api/MODULE.json" }
   ],
 
   "namingConventions": [
-    { "suffix": "UseCase",     "layer": "core.ports.in",   "type": "interface", "example": "CreateUserUseCase" },
-    { "suffix": "UseCaseImpl", "layer": "core.usecase",    "type": "class",     "example": "CreateUserUseCaseImpl", "annotations": ["@Named"] },
-    { "suffix": "Port",        "layer": "core.ports.out",  "type": "interface", "example": "UserRepositoryPort" },
-    { "suffix": "Adapter",     "layer": "infra-* outbound","type": "class",     "example": "UserRepositoryAdapter", "annotations": ["@Repository or @Component"] },
-    { "suffix": "Controller",  "layer": "infra-api",       "type": "class",     "example": "UserController",        "annotations": ["@RestController"] },
-    { "suffix": "Listener",    "layer": "infra-kafka",     "type": "class",     "example": "UserEventListener",     "annotations": ["@Component", "@KafkaListener"] },
-    { "suffix": "Mapper",      "layer": "infra-* mapper",  "type": "interface", "example": "UserApiMapper",         "annotations": ["@Mapper(componentModel = SPRING)"] },
-    { "suffix": "Entity",      "layer": "infra-postgres",  "type": "class",     "example": "UserEntity",            "annotations": ["@Entity"] }
+    { "suffix": "UseCase",     "layer": "core.ports.in",    "type": "interface", "example": "CreateUserUseCase" },
+    { "suffix": "UseCaseImpl", "layer": "core.usecase",     "type": "class",     "example": "CreateUserUseCaseImpl", "annotations": ["@Named"] },
+    { "suffix": "Command",     "layer": "core.command",     "type": "record",    "example": "CreateUserCommand" },
+    { "suffix": "Port",        "layer": "core.ports.out",   "type": "interface", "example": "UserRepositoryPort" },
+    { "suffix": "Adapter",     "layer": "infra-* outbound", "type": "class",     "example": "UserRepositoryAdapter", "annotations": ["@Repository or @Component"] },
+    { "suffix": "Controller",  "layer": "infra-api",        "type": "class",     "example": "UserController",        "annotations": ["@RestController"] },
+    { "suffix": "Listener",    "layer": "infra-kafka",      "type": "class",     "example": "UserEventListener",     "annotations": ["@Component", "@KafkaListener"] },
+    { "suffix": "Mapper",      "layer": "infra-* mapper",   "type": "interface", "example": "UserApiMapper",         "annotations": ["@Mapper(componentModel = SPRING)"] },
+    { "suffix": "Entity",      "layer": "infra-postgres",   "type": "class",     "example": "UserEntity",            "annotations": ["@Entity"] }
   ],
 
   "mapperRules": {
@@ -176,7 +51,7 @@
     "package": "*.mapper",
     "componentModel": "MappingConstants.ComponentModel.SPRING",
     "ownership": {
-      "infra-api":      "Request/Response DTO ↔ Core Domain",
+      "infra-api":      "Request DTO → Command (core.command) / Domain → Response DTO",
       "infra-postgres": "Core Domain ↔ JPA Entity",
       "infra-kafka":    "Event Payload ↔ Core Domain",
       "infra-dynamodb": "Core Domain ↔ DynamoDB Entity"
