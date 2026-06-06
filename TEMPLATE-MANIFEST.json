@@ -9,7 +9,7 @@
     "build": "Maven (flat multi-module, no root aggregator packaging)",
     "persistence": "Spring Data JPA (PostgreSQL) | AWS DynamoDB (Spring Cloud AWS 3.3.0)",
     "cache": "Spring Data Redis — Valkey-compatible",
-    "messaging": "Spring Kafka",
+    "messaging": "Spring Kafka (Avro + Confluent Schema Registry) | AWS SQS | AWS SNS (Spring Cloud AWS 3.3.0)",
     "httpClient": "Spring Cloud OpenFeign",
     "mapping": "MapStruct 1.6.3",
     "di": "Jakarta Inject (@Named) in core; Spring DI in infra-*"
@@ -30,7 +30,9 @@
     { "name": "infra-postgres",  "includeWhen": "database = postgres",                    "manifest": "infra-postgres/MODULE.json" },
     { "name": "infra-dynamodb",  "includeWhen": "database = dynamodb",                    "manifest": "infra-dynamodb/MODULE.json" },
     { "name": "infra-valkey",    "includeWhen": "cache = server",                         "manifest": "infra-valkey/MODULE.json" },
-    { "name": "infra-kafka",     "includeWhen": "appType = worker AND broker = kafka",     "manifest": "infra-kafka/MODULE.json" },
+    { "name": "infra-kafka",     "includeWhen": "broker = kafka",                          "manifest": "infra-kafka/MODULE.json" },
+    { "name": "infra-sqs",      "includeWhen": "broker = sqs",                            "manifest": "infra-sqs/MODULE.json" },
+    { "name": "infra-sns",      "includeWhen": "broker = sns",                            "manifest": "infra-sns/MODULE.json" },
     { "name": "infra-client-api","includeWhen": "httpClient = feign",                     "manifest": "infra-client-api/MODULE.json" }
   ],
 
@@ -53,7 +55,9 @@
     "ownership": {
       "infra-api":      "Request DTO → Command (core.command) / Domain → Response DTO",
       "infra-postgres": "Core Domain ↔ JPA Entity",
-      "infra-kafka":    "Event Payload ↔ Core Domain",
+      "infra-kafka":    "UserEvent (Avro) ↔ Core Domain / Command",
+      "infra-sqs":      "UserSqsMessage (JSON) ↔ Core Domain / Command",
+      "infra-sns":      "UserSnsNotification (JSON) ↔ Core Domain",
       "infra-dynamodb": "Core Domain ↔ DynamoDB Entity"
     }
   },

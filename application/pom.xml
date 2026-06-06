@@ -42,6 +42,14 @@
             <groupId>com.mycompany.template</groupId>
             <artifactId>infra-dynamodb</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.mycompany.template</groupId>
+            <artifactId>infra-sqs</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mycompany.template</groupId>
+            <artifactId>infra-sns</artifactId>
+        </dependency>
 
         <!-- Spring Boot Actuator -->
         <dependency>

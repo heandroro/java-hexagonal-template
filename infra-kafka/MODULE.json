@@ -1,15 +1,19 @@
 {
-  "role": "Async messaging — Spring Kafka consumers and producers",
-  "includeWhen": "appType = worker AND broker = kafka OR broker = sqs",
-  "allowedDependencies": ["core", "spring-kafka", "mapstruct"],
+  "role": "Async messaging — Spring Kafka with Avro serialization (Confluent Schema Registry)",
+  "includeWhen": "broker = kafka",
+  "allowedDependencies": ["core", "spring-kafka", "kafka-avro-serializer", "avro", "mapstruct"],
   "packages": {
-    "infra.kafka.listener": "Inbound @KafkaListener classes (*Listener) — no interface",
-    "infra.kafka.dto":      "Event payload records",
-    "infra.kafka.mapper":   "MapStruct mappers (Event Payload ↔ Core Domain)"
+    "infra.kafka.listener":  "Inbound @KafkaListener (*Listener) — no interface; receives Avro UserEvent",
+    "infra.kafka.publisher": "UserKafkaPublisher implementing UserKafkaPublisherPort",
+    "infra.kafka.mapper":    "MapStruct mappers (UserEvent Avro ↔ Core Domain / Command)",
+    "infra.kafka.avro":      "Generated Avro classes from src/main/avro/*.avsc (build-time)"
   },
-  "keyClasses": ["UserEventListener", "UserEventPayload", "UserKafkaMapper"],
+  "keyClasses": ["UserEventListener", "UserKafkaPublisher", "UserKafkaMapper", "UserEvent"],
+  "avroSchemas": ["src/main/avro/user-event.avsc"],
   "config": {
     "topicProperty": "app.kafka.topics.user-created",
-    "topicDefault": "user.created"
+    "topicDefault": "user.created",
+    "schemaRegistryProperty": "spring.kafka.consumer.properties.schema.registry.url",
+    "schemaRegistryDefault": "http://localhost:8082"
   }
 }

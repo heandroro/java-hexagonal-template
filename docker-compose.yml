@@ -39,9 +39,10 @@ services:
     environment:
       KAFKA_CFG_NODE_ID: 1
       KAFKA_CFG_PROCESS_ROLES: controller,broker
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,INTERNAL://:29092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,INTERNAL://kafka:29092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
@@ -55,6 +56,67 @@ services:
       timeout: 10s
       retries: 10
       start_period: 30s
+
+  # ─── Confluent Schema Registry (Avro) ────────────────────────
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.7.0
+    container_name: hexagonal-schema-registry
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:29092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    ports:
+      - "8082:8081"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8081/subjects || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ─── AWS SQS + SNS (LocalStack) ──────────────────────────────
+  localstack:
+    image: localstack/localstack:3
+    container_name: hexagonal-localstack
+    environment:
+      SERVICES: sqs,sns
+      DEFAULT_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+    ports:
+      - "4566:4566"
+    volumes:
+      - localstack_data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4566/_localstack/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    profiles:
+      - sqs
+      - sns
+
+  localstack-init:
+    image: amazon/aws-cli:latest
+    container_name: hexagonal-localstack-init
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: dummy
+      AWS_SECRET_ACCESS_KEY: dummy
+      AWS_DEFAULT_REGION: us-east-1
+    entrypoint: >
+      sh -c "
+        aws --endpoint-url=http://localstack:4566 sqs create-queue --queue-name user-events-queue &&
+        aws --endpoint-url=http://localstack:4566 sns create-topic --name user-events-topic
+      "
+    profiles:
+      - sqs
+      - sns
 
   # ─── DynamoDB Local (only with --profile dynamodb) ───────────
   dynamodb-local:
@@ -95,3 +157,4 @@ volumes:
   postgres_data:
   valkey_data:
   kafka_data:
+  localstack_data:

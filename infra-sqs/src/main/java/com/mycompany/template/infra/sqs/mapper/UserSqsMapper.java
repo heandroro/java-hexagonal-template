@@ -1,20 +1,20 @@
-package com.mycompany.template.infra.kafka.mapper;
+package com.mycompany.template.infra.sqs.mapper;
 
 import com.mycompany.template.core.command.CreateUserCommand;
 import com.mycompany.template.core.domain.User;
-import com.mycompany.template.infra.kafka.avro.UserEvent;
+import com.mycompany.template.infra.sqs.dto.UserSqsMessage;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
-public interface UserKafkaMapper {
+public interface UserSqsMapper {
 
     @Mapping(target = "id",        expression = "java(user.id().toString())")
     @Mapping(target = "createdAt", expression = "java(user.createdAt().toString())")
-    UserEvent toEvent(User user);
+    UserSqsMessage toMessage(User user);
 
     @Mapping(target = "name",  source = "name")
     @Mapping(target = "email", source = "email")
-    CreateUserCommand toCommand(UserEvent event);
+    CreateUserCommand toCommand(UserSqsMessage message);
 }

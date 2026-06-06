@@ -4,6 +4,9 @@ import com.mycompany.template.core.domain.User;
 import com.mycompany.template.core.exception.UserAlreadyExistsException;
 import com.mycompany.template.core.command.CreateUserCommand;
 import com.mycompany.template.core.ports.out.UserCachePort;
+import com.mycompany.template.core.ports.out.UserKafkaPublisherPort;
+import com.mycompany.template.core.ports.out.UserNotificationPublisherPort;
+import com.mycompany.template.core.ports.out.UserQueuePublisherPort;
 import com.mycompany.template.core.ports.out.UserRepositoryPort;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.Nested;
@@ -28,6 +31,15 @@ class CreateUserUseCaseImplTest {
     @Mock
     private UserCachePort userCachePort;
 
+    @Mock
+    private UserKafkaPublisherPort userKafkaPublisherPort;
+
+    @Mock
+    private UserQueuePublisherPort userQueuePublisherPort;
+
+    @Mock
+    private UserNotificationPublisherPort userNotificationPublisherPort;
+
     @InjectMocks
     private CreateUserUseCaseImpl createUserUseCase;
 
@@ -35,7 +47,7 @@ class CreateUserUseCaseImplTest {
     class WhenEmailIsNew {
 
         @Test
-        void should_saveAndCacheUser_when_emailDoesNotExist() {
+        void should_saveAndCacheAndPublish_when_emailDoesNotExist() {
             var savedUser = Instancio.create(User.class);
             given(userRepositoryPort.existsByEmail(savedUser.email())).willReturn(false);
             given(userRepositoryPort.save(any(User.class))).willReturn(savedUser);
@@ -45,6 +57,9 @@ class CreateUserUseCaseImplTest {
             assertThat(result).isEqualTo(savedUser);
             then(userRepositoryPort).should().save(any(User.class));
             then(userCachePort).should().put(savedUser);
+            then(userKafkaPublisherPort).should().publish(savedUser);
+            then(userQueuePublisherPort).should().publish(savedUser);
+            then(userNotificationPublisherPort).should().publish(savedUser);
         }
     }
 

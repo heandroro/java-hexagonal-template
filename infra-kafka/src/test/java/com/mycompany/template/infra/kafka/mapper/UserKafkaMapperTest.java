@@ -1,10 +1,12 @@
 package com.mycompany.template.infra.kafka.mapper;
 
 import com.mycompany.template.core.domain.User;
-import com.mycompany.template.infra.kafka.dto.UserEventPayload;
+import com.mycompany.template.infra.kafka.avro.UserEvent;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -13,53 +15,47 @@ class UserKafkaMapperTest {
     private final UserKafkaMapper mapper = new UserKafkaMapperImpl();
 
     @Nested
-    class ToDomain {
-
-        @Test
-        void should_mapAllFields_when_payloadIsValid() {
-            var payload = Instancio.create(UserEventPayload.class);
-
-            var user = mapper.toDomain(payload);
-
-            assertThat(user.id()).isEqualTo(payload.id());
-            assertThat(user.name()).isEqualTo(payload.name());
-            assertThat(user.email()).isEqualTo(payload.email());
-            assertThat(user.createdAt()).isEqualTo(payload.createdAt());
-        }
-
-        @Test
-        void should_returnNull_when_payloadIsNull() {
-            assertThat(mapper.toDomain(null)).isNull();
-        }
-    }
-
-    @Nested
-    class ToPayload {
+    class ToEvent {
 
         @Test
         void should_mapAllFields_when_userIsValid() {
             var user = Instancio.create(User.class);
 
-            var payload = mapper.toPayload(user);
+            var event = mapper.toEvent(user);
 
-            assertThat(payload.id()).isEqualTo(user.id());
-            assertThat(payload.name()).isEqualTo(user.name());
-            assertThat(payload.email()).isEqualTo(user.email());
-            assertThat(payload.createdAt()).isEqualTo(user.createdAt());
+            assertThat(event.getId()).isEqualTo(user.id().toString());
+            assertThat(event.getName()).isEqualTo(user.name());
+            assertThat(event.getEmail()).isEqualTo(user.email());
+            assertThat(event.getCreatedAt()).isEqualTo(user.createdAt().toString());
         }
 
         @Test
         void should_returnNull_when_userIsNull() {
-            assertThat(mapper.toPayload(null)).isNull();
+            assertThat(mapper.toEvent(null)).isNull();
         }
     }
 
-    @Test
-    void should_preserveAllFields_when_roundTripToPayloadThenToDomain() {
-        var original = Instancio.create(User.class);
+    @Nested
+    class ToCommand {
 
-        var result = mapper.toDomain(mapper.toPayload(original));
+        @Test
+        void should_mapNameAndEmail_when_eventIsValid() {
+            var event = UserEvent.newBuilder()
+                    .setId(UUID.randomUUID().toString())
+                    .setName("Alice")
+                    .setEmail("alice@example.com")
+                    .setCreatedAt("2024-01-01T00:00:00")
+                    .build();
 
-        assertThat(result).isEqualTo(original);
+            var command = mapper.toCommand(event);
+
+            assertThat(command.name()).isEqualTo(event.getName());
+            assertThat(command.email()).isEqualTo(event.getEmail());
+        }
+
+        @Test
+        void should_returnNull_when_eventIsNull() {
+            assertThat(mapper.toCommand(null)).isNull();
+        }
     }
 }

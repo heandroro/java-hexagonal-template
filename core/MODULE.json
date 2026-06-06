@@ -17,6 +17,7 @@
     "CreateUserUseCase", "FindUserUseCase", "ListUsersUseCase",
     "UpdateUserUseCase", "PatchUserUseCase", "DeleteUserUseCase",
     "UserRepositoryPort", "UserCachePort",
+    "UserKafkaPublisherPort", "UserQueuePublisherPort", "UserNotificationPublisherPort",
     "CreateUserUseCaseImpl", "FindUserUseCaseImpl", "ListUsersUseCaseImpl",
     "UpdateUserUseCaseImpl", "PatchUserUseCaseImpl", "DeleteUserUseCaseImpl"
   ]
