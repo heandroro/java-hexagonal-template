@@ -22,7 +22,8 @@ flowchart TD
             CMD["command\nCreateUserCommand\nUpdateUserCommand\nPatchUserCommand"]
             UC["usecase\n*UseCaseImpl ×6\n@Named"]
             POUT["ports.out\nUserRepositoryPort\nUserCachePort"]
-            PIN --> CMD --> UC --> POUT
+            PIN --> UC --> POUT
+            CMD -. "write params" .-> UC
         end
 
         subgraph OUTBOUND["Outbound Adapters"]
@@ -57,7 +58,7 @@ flowchart TD
 ## Module Map
 
 | Module | Technology | Role |
-|---|---|---|
+| --- | --- | --- |
 | `core` | Java 21 std + jakarta.inject | Business rules, domain model, command objects, port contracts |
 | `infra-api` | Spring Web MVC + MapStruct | REST inbound adapter (Controllers + DTOs) |
 | `infra-postgres` | Spring Data JPA + Hibernate + Lombok | Relational persistence outbound adapter |
@@ -71,7 +72,7 @@ flowchart TD
 
 ## Data-Flow Walkthrough: `POST /api/v1/users`
 
-```
+```text
 HTTP Request
     │
     ▼
@@ -100,7 +101,7 @@ UserController returns UserResponse (201 Created)
 
 ### `GET /api/v1/users/{id}` — cache-first
 
-```
+```text
 FindUserUseCaseImpl.execute(id)
     │
     ├──▶ UserCachePort.get(id)  → HIT  → return User
@@ -110,7 +111,7 @@ FindUserUseCaseImpl.execute(id)
 
 ### `PUT /api/v1/users/{id}` — full replace
 
-```
+```text
 UserController.update(@PathVariable id, @RequestBody UpdateUserRequest)   [infra-api]
     │  UserApiMapper.toCommand(request) → UpdateUserCommand
     │
@@ -125,7 +126,7 @@ UserController returns UserResponse (200 OK)
 
 ### `PATCH /api/v1/users/{id}` — partial update
 
-```
+```text
 UserController.patch(@PathVariable id, @RequestBody PatchUserRequest)     [infra-api]
     │  UserApiMapper.toCommand(request) → PatchUserCommand   [null fields ignored via @BeanMapping]
     │
@@ -141,7 +142,7 @@ UserController returns UserResponse (200 OK)
 
 ### Kafka: `user.created` topic
 
-```
+```text
 UserEventListener.onUserCreated(UserEventPayload)       [infra-kafka — @KafkaListener]
     │
     ▼
@@ -153,7 +154,7 @@ CreateUserUseCase.execute(CreateUserCommand)
 ## Naming Conventions
 
 | Suffix | Module | Type | Spring annotation |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `UseCase` | `core.ports.in` | `interface` | — |
 | `UseCaseImpl` | `core.usecase` | `class` | `@Named` (jakarta) |
 | `Command` | `core.command` | `record` | — |
@@ -184,7 +185,7 @@ CreateUserUseCase.execute(CreateUserCommand)
 
 Follow this exact order — do not skip steps or create files out of sequence:
 
-```
+```text
 [ ] 1.  core / domain        — add pure domain record/class (zero annotations)
 [ ] 2.  core / command       — add *Command record(s) for write operations
 [ ] 3.  core / ports.out     — add *Port interface(s) the use case needs
@@ -205,7 +206,7 @@ Follow this exact order — do not skip steps or create files out of sequence:
 ## LLM Indexing
 
 | File | Purpose |
-|---|---|
+| --- | --- |
 | `TEMPLATE-MANIFEST.json` | Root index: stack, replace tokens, naming/mapper/interface rules, module list |
 | `{module}/MODULE.json` | Per-module detail: role, packages, keyClasses, config |
 | `AGENTS.md` | Prescriptive rules — what to do and what to avoid |
@@ -216,7 +217,7 @@ Follow this exact order — do not skip steps or create files out of sequence:
 ## Configuration Reference
 
 | Property | Default | Env var override |
-|---|---|---|
+| --- | --- | --- |
 | `spring.datasource.url` | `jdbc:postgresql://localhost:5432/hexagonal_db` | — |
 | `spring.data.redis.host` | `localhost` | `REDIS_HOST` |
 | `spring.data.redis.port` | `6379` | `REDIS_PORT` |
