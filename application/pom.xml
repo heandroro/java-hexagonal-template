@@ -26,6 +26,12 @@
             <groupId>com.mycompany.template</groupId>
             <artifactId>infra-postgres</artifactId>
         </dependency>
+        <!-- Uncomment to use MariaDB instead of PostgreSQL (include only one at a time):
+        <dependency>
+            <groupId>com.mycompany.template</groupId>
+            <artifactId>infra-mariadb</artifactId>
+        </dependency>
+        -->
         <dependency>
             <groupId>com.mycompany.template</groupId>
             <artifactId>infra-valkey</artifactId>

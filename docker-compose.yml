@@ -18,6 +18,25 @@ services:
       timeout: 5s
       retries: 5
 
+  # ─── Relational DB (MariaDB — only with --profile mariadb) ──
+  mariadb:
+    image: mariadb:11-lts
+    container_name: hexagonal-mariadb
+    environment:
+      MARIADB_DATABASE: hexagonal_db
+      MARIADB_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - mariadb
+
   # ─── Cache (Valkey — Redis-compatible) ───────────────────────
   valkey:
     image: valkey/valkey:8-alpine
@@ -155,6 +174,7 @@ services:
 
 volumes:
   postgres_data:
+  mariadb_data:
   valkey_data:
   kafka_data:
   localstack_data:

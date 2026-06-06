@@ -17,6 +17,7 @@
         <module>infra-api</module>
         <module>infra-kafka</module>
         <module>infra-postgres</module>
+        <module>infra-mariadb</module>
         <module>infra-valkey</module>
         <module>infra-client-api</module>
         <module>infra-dynamodb</module>
@@ -131,6 +132,11 @@
             <dependency>
                 <groupId>com.mycompany.template</groupId>
                 <artifactId>infra-postgres</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mycompany.template</groupId>
+                <artifactId>infra-mariadb</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
