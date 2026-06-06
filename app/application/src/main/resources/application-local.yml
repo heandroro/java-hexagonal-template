@@ -7,3 +7,11 @@ spring:
       enabled: true
     livereload:
       enabled: true
+  cloud:
+    aws:
+      dynamodb:
+        endpoint: http://localhost:8000
+      sqs:
+        endpoint: http://localhost:4566
+      sns:
+        endpoint: http://localhost:4566

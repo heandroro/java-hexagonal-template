@@ -72,7 +72,7 @@ app:
       user-events: ${SNS_USER_EVENTS_TOPIC_ARN:arn:aws:sns:us-east-1:000000000000:user-events-topic}
   clients:
     external-user-service:
-      url: ${EXTERNAL_USER_SERVICE_URL:http://localhost:8081}
+      url: ${EXTERNAL_USER_SERVICE_URL:http://localhost:8089}
 
 management:
   endpoints:
