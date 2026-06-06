@@ -9,8 +9,11 @@ import com.mycompany.template.core.ports.in.CreateUserUseCase;
 import com.mycompany.template.core.ports.in.DeleteUserUseCase;
 import com.mycompany.template.core.ports.in.FindUserUseCase;
 import com.mycompany.template.core.ports.in.ListUsersUseCase;
+import com.mycompany.template.core.ports.in.PatchUserCommand;
+import com.mycompany.template.core.ports.in.PatchUserUseCase;
 import com.mycompany.template.core.ports.in.UpdateUserUseCase;
 import com.mycompany.template.infra.api.dto.CreateUserRequest;
+import com.mycompany.template.infra.api.dto.PatchUserRequest;
 import com.mycompany.template.infra.api.dto.UpdateUserRequest;
 import com.mycompany.template.infra.api.dto.UserResponse;
 import com.mycompany.template.infra.api.handler.ApiExceptionHandler;
@@ -36,6 +39,7 @@ import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -62,6 +66,9 @@ class UserControllerTest {
 
     @MockitoBean
     private UpdateUserUseCase updateUserUseCase;
+
+    @MockitoBean
+    private PatchUserUseCase patchUserUseCase;
 
     @MockitoBean
     private DeleteUserUseCase deleteUserUseCase;
@@ -213,6 +220,66 @@ class UserControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(new UpdateUserRequest("", "bad"))))
                     .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
+    class Patch {
+
+        @Test
+        void should_return200_when_patchIsValid() throws Exception {
+            var id = UUID.randomUUID();
+            var request = new PatchUserRequest("Patched Name", null);
+            var command = new PatchUserCommand(request.name(), request.email());
+            var user = Instancio.create(User.class);
+            var response = new UserResponse(user.id(), user.name(), user.email(), user.createdAt());
+            given(userApiMapper.toCommand(any())).willReturn(command);
+            given(patchUserUseCase.execute(eq(id), eq(command))).willReturn(user);
+            given(userApiMapper.toResponse(user)).willReturn(response);
+
+            mockMvc.perform(patch("/api/v1/users/{id}", id)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(response.id().toString()));
+        }
+
+        @Test
+        void should_return400_when_emailIsInvalid() throws Exception {
+            mockMvc.perform(patch("/api/v1/users/{id}", UUID.randomUUID())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"email\":\"not-an-email\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void should_return404_when_userNotFound() throws Exception {
+            var id = UUID.randomUUID();
+            var command = new PatchUserCommand(null, null);
+            given(userApiMapper.toCommand(any())).willReturn(command);
+            given(patchUserUseCase.execute(eq(id), eq(command)))
+                    .willThrow(new UserNotFoundException(id));
+
+            mockMvc.perform(patch("/api/v1/users/{id}", id)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}"))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.title").value("User Not Found"));
+        }
+
+        @Test
+        void should_return409_when_emailAlreadyTaken() throws Exception {
+            var id = UUID.randomUUID();
+            var command = new PatchUserCommand(null, "taken@example.com");
+            given(userApiMapper.toCommand(any())).willReturn(command);
+            given(patchUserUseCase.execute(eq(id), eq(command)))
+                    .willThrow(new UserAlreadyExistsException("taken@example.com"));
+
+            mockMvc.perform(patch("/api/v1/users/{id}", id)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"email\":\"taken@example.com\"}"))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.title").value("User Already Exists"));
         }
     }
 
