@@ -12,7 +12,11 @@
     "messaging": "Spring Kafka (Avro + Confluent Schema Registry) | AWS SQS | AWS SNS (Spring Cloud AWS 3.3.0)",
     "httpClient": "Spring Cloud OpenFeign",
     "mapping": "MapStruct 1.6.3",
-    "di": "Jakarta Inject (@Named) in core; Spring DI in infra-*"
+    "di": "Jakarta Inject (@Named) in core; Spring DI in infra-*",
+    "testing": "JUnit 5 · Mockito 5 · Instancio 5.3.0 · Testcontainers 1.20.6",
+    "coverage": "JaCoCo 0.8.12 — 90% line + branch threshold per module",
+    "staticAnalysis": "Checkstyle 3.5.0 (verify) · SpotBugs 4.8.x (JDK ≤ 23) · PMD 7.3.x (JDK ≤ 23)",
+    "architectureTests": "ArchUnit 1.3.0 — 19 rules in HexagonalArchitectureTest"
   },
 
   "replaceTokens": [
@@ -85,7 +89,12 @@
     "core/src/main/java/com/mycompany/template/core/usecase/CreateUserUseCaseImpl.java",
     "infra-postgres/src/main/java/com/mycompany/template/infra/postgres/adapter/UserRepositoryAdapter.java",
     "infra-api/src/main/java/com/mycompany/template/infra/api/controller/UserController.java",
-    "AGENTS.md"
+    "AGENTS.md",
+    "config/checkstyle/checkstyle.xml",
+    "config/checkstyle/suppressions.xml",
+    "config/spotbugs/exclude.xml",
+    "config/pmd/ruleset.xml",
+    "application/src/test/java/com/mycompany/template/architecture/HexagonalArchitectureTest.java"
   ],
 
   "localDev": {

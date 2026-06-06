@@ -197,6 +197,11 @@ CreateUserUseCase.execute(CreateUserCommand)
 9. **Command objects in `core.command`** — write use cases receive `*Command` records instead of loose parameters. MapStruct in `infra-api` converts Request DTOs → Commands; PATCH uses `@BeanMapping(nullValuePropertyMappingStrategy = IGNORE)` to skip null fields.
 10. **Profile isolation for alternative adapters** — `infra-mariadb` is `@Profile("mariadb")` as a drop-in for `infra-postgres` (activate one or the other); `infra-sqs` and `infra-sns` use `@Profile("sqs")`/`@Profile("sns")` with `NoOp*` fallbacks via `@ConditionalOnMissingBean` so the app boots without the broker.
 
+> All 10 rules above are automatically enforced by `HexagonalArchitectureTest`
+> (ArchUnit 1.3.0) on every `mvn verify` run — located at
+> `application/src/test/java/com/mycompany/template/architecture/`.
+> Any violation fails the build before the commit reaches CI.
+
 ---
 
 ## How to Add a New Feature (Blueprint Checklist)
@@ -246,3 +251,18 @@ Follow this exact order — do not skip steps or create files out of sequence:
 | `spring.cloud.aws.region.static` | `us-east-1` | `AWS_REGION` |
 | `spring.cloud.aws.dynamodb.endpoint` | _(empty — uses AWS)_ | `DYNAMODB_ENDPOINT` |
 | `app.clients.external-user-service.url` | `http://localhost:8081` | `EXTERNAL_USER_SERVICE_URL` |
+
+---
+
+## Quality Gates
+
+| Tool | Phase | What it checks |
+| --- | --- | --- |
+| JaCoCo | `verify` | ≥ 90% line + branch coverage per module |
+| Checkstyle | `verify` | style — imports, braces, line length ≤ 120 |
+| ArchUnit | `verify` | 19 hexagonal rules as JUnit tests |
+| SpotBugs | manual (`mvn spotbugs:check`, JDK ≤ 23) | bugs and vulnerabilities |
+| PMD | manual (`mvn pmd:check`, JDK ≤ 23) | complexity and code smells |
+
+Configuration lives in `config/checkstyle/`, `config/spotbugs/`, `config/pmd/`.
+See `AGENTS.md` section 7 for details and JDK compatibility notes.
