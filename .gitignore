@@ -83,3 +83,6 @@ logs/
 
 # APM dependencies
 apm_modules/
+
+# Claude Code
+.claude/
