@@ -9,11 +9,13 @@
 ```mermaid
 flowchart LR
     EXT_KAFKA[/"Kafka\nuser.created"/]
+    EXT_SQS_IN[/"SQS\nuser-events"/]
 
     subgraph INBOUND["Inbound Adapters"]
         direction TB
         API["infra-api\nUserController\n@RestController"]
         KAFKA["infra-kafka\nUserEventListener\n@KafkaListener"]
+        SQS_L["infra-sqs\nUserSqsListener\n@SqsListener"]
     end
 
     subgraph CORE["⬡ CORE — framework-free"]
@@ -29,26 +31,40 @@ flowchart LR
     subgraph OUTBOUND["Outbound Adapters"]
         direction TB
         PG["infra-postgres\nUserRepositoryAdapter\n@Repository"]
+        MDB["infra-mariadb\nUserRepositoryAdapter\n@Profile('mariadb')"]
         VK["infra-valkey\nUserCacheAdapter\n@Repository"]
         DY["infra-dynamodb\nUserDynamoDbAdapter\n@Profile('dynamodb')"]
         FC["infra-client-api\nExternalUserClient\n@FeignClient"]
+        SQS_P["infra-sqs\nUserSqsPublisher\n@Profile('sqs')"]
+        SNS["infra-sns\nUserSnsPublisher\n@Profile('sns')"]
     end
 
     EXT_HTTP(["External Service"])
     EXT_DB[("PostgreSQL")]
+    EXT_MARIADB[("MariaDB")]
     EXT_CACHE[("Valkey / Redis")]
     EXT_DYNAMO[("AWS DynamoDB")]
+    EXT_SQS[("AWS SQS")]
+    EXT_SNS[("AWS SNS")]
 
     EXT_KAFKA --> KAFKA
+    EXT_SQS_IN --> SQS_L
     API --> PIN
     KAFKA --> PIN
+    SQS_L --> PIN
     POUT --> PG
+    POUT -.-> MDB
     POUT --> VK
     POUT -.-> DY
+    POUT -.-> SQS_P
+    POUT -.-> SNS
     FC --> EXT_HTTP
     PG --> EXT_DB
+    MDB --> EXT_MARIADB
     VK --> EXT_CACHE
     DY --> EXT_DYNAMO
+    SQS_P --> EXT_SQS
+    SNS --> EXT_SNS
 ```
 
 ---
@@ -59,9 +75,12 @@ flowchart LR
 | --- | --- | --- |
 | `core` | Java 21 std + jakarta.inject | Business rules, domain model, command objects, port contracts |
 | `infra-api` | Spring Web MVC + MapStruct | REST inbound adapter (Controllers + DTOs) |
-| `infra-postgres` | Spring Data JPA + Hibernate + Lombok | Relational persistence outbound adapter |
+| `infra-postgres` | Spring Data JPA + Hibernate + Lombok | Relational persistence outbound adapter (PostgreSQL) |
+| `infra-mariadb` | Spring Data JPA + Hibernate + Lombok | Relational persistence outbound adapter — drop-in for MariaDB (`@Profile("mariadb")`) |
 | `infra-valkey` | Spring Data Redis | Cache outbound adapter (Valkey-compatible) |
-| `infra-kafka` | Spring Kafka + MapStruct | Async messaging inbound/outbound |
+| `infra-kafka` | Spring Kafka + Avro + MapStruct | Async messaging inbound/outbound (Kafka) |
+| `infra-sqs` | Spring Cloud AWS 3.3 (SQS) + MapStruct | AWS SQS inbound listener + outbound publisher (`@Profile("sqs")`) |
+| `infra-sns` | Spring Cloud AWS 3.3 (SNS) + MapStruct | AWS SNS fan-out publisher outbound adapter (`@Profile("sns")`) |
 | `infra-dynamodb` | Spring Cloud AWS 3.3 + MapStruct | DynamoDB outbound adapter (`@Profile("dynamodb")`) |
 | `infra-client-api` | Spring Cloud OpenFeign | Outbound HTTP client integrations |
 | `application` | Spring Boot 3.5.0 | Bootstrapper — wires all modules + `application.yml` |
@@ -174,8 +193,9 @@ CreateUserUseCase.execute(CreateUserCommand)
 5. **No extra interfaces on adapters** — `UserRepositoryAdapter` implements `UserRepositoryPort` directly; no `IUserRepositoryAdapter`.
 6. **No interfaces on inbound adapters** — `UserController` and `UserEventListener` are concrete classes only.
 7. **DynamoDB profile isolation** — `UserDynamoDbAdapter` is `@Profile("dynamodb")`; activating it alongside the Postgres adapter causes a duplicate `UserRepositoryPort` bean.
-8. **Lombok scoped to `infra-postgres` only** — JPA entities need mutable boilerplate; all other layers use records or plain classes.
+8. **Lombok scoped to JPA modules only** — `infra-postgres` and `infra-mariadb` use Lombok for entity boilerplate; all other layers use records or plain classes.
 9. **Command objects in `core.command`** — write use cases receive `*Command` records instead of loose parameters. MapStruct in `infra-api` converts Request DTOs → Commands; PATCH uses `@BeanMapping(nullValuePropertyMappingStrategy = IGNORE)` to skip null fields.
+10. **Profile isolation for alternative adapters** — `infra-mariadb` is `@Profile("mariadb")` as a drop-in for `infra-postgres` (activate one or the other); `infra-sqs` and `infra-sns` use `@Profile("sqs")`/`@Profile("sns")` with `NoOp*` fallbacks via `@ConditionalOnMissingBean` so the app boots without the broker.
 
 ---
 
@@ -192,7 +212,8 @@ Follow this exact order — do not skip steps or create files out of sequence:
 [ ] 6.  infra-postgres       — add *Entity, extend JpaRepository, add *Mapper, add *Adapter
 [ ] 7.  infra-valkey         — add *Adapter if caching is needed
 [ ] 8.  infra-dynamodb       — add *DynamoDbEntity (mutable, no Lombok), *Mapper, *Adapter (@Profile)
-[ ] 9.  infra-kafka          — add payload record, *Mapper, *Listener if event-driven
+[ ] 9.  messaging            — choose broker: infra-kafka (*Listener), infra-sqs (*Listener + *Publisher + NoOp*Publisher),
+                               or infra-sns (*Publisher + NoOp*Publisher) — add payload/notification record, *Mapper
 [ ] 10. infra-client-api     — add @FeignClient if external HTTP call needed
 [ ] 11. infra-api            — add Request/Response records, *Mapper, *Controller
 ```

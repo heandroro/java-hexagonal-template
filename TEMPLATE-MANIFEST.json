@@ -19,8 +19,11 @@
     { "token": "com.mycompany.template",  "description": "Base Java package and Maven groupId" },
     { "token": "com.mycompany",           "description": "Parent package — replace when namespace has depth > 2" },
     { "token": "java-hexagonal-template", "description": "Root Maven artifactId, project folder name, spring.application.name" },
-    { "token": "hexagonal_db",            "description": "PostgreSQL database name in application.yml" },
-    { "token": "hexagonal-template-group","description": "Kafka consumer group-id in application.yml" }
+    { "token": "hexagonal_db",            "description": "PostgreSQL / MariaDB database name in application.yml and docker-compose.yml" },
+    { "token": "hexagonal-template-group","description": "Kafka consumer group-id in application.yml" },
+    { "token": "user-events-queue",       "description": "SQS queue name — localstack-init entrypoint + app.sqs.queues.user-events in application.yml" },
+    { "token": "user-events-topic",       "description": "SNS topic name — localstack-init entrypoint + app.sns.topics.user-events in application.yml" },
+    { "token": "users",                   "description": "DynamoDB table name — dynamodb-init entrypoint + application.yml" }
   ],
 
   "modules": [
@@ -75,6 +78,7 @@
     "pom.xml",
     "core/pom.xml",
     "application/src/main/resources/application.yml",
+    "docker-compose.yml",
     "core/src/main/java/com/mycompany/template/core/domain/User.java",
     "core/src/main/java/com/mycompany/template/core/ports/in/CreateUserUseCase.java",
     "core/src/main/java/com/mycompany/template/core/ports/out/UserRepositoryPort.java",
@@ -82,5 +86,41 @@
     "infra-postgres/src/main/java/com/mycompany/template/infra/postgres/adapter/UserRepositoryAdapter.java",
     "infra-api/src/main/java/com/mycompany/template/infra/api/controller/UserController.java",
     "AGENTS.md"
-  ]
+  ],
+
+  "localDev": {
+    "compose": {
+      "alwaysOn": ["postgres", "valkey", "kafka", "schema-registry"],
+      "profiles": {
+        "mariadb":  { "services": ["mariadb"],                        "replaces": "postgres" },
+        "sqs":      { "services": ["localstack", "localstack-init"],  "replaces": null },
+        "sns":      { "services": ["localstack", "localstack-init"],  "replaces": null },
+        "dynamodb": { "services": ["dynamodb-local", "dynamodb-init"],"replaces": null }
+      },
+      "ports": {
+        "postgres":        5432,
+        "mariadb":         3306,
+        "valkey":          6379,
+        "kafka":           9092,
+        "schema-registry": 8082,
+        "localstack":      4566,
+        "dynamodb-local":  8000
+      },
+      "images": {
+        "postgres":        "postgres:17-alpine",
+        "mariadb":         "mariadb:11-lts",
+        "valkey":          "valkey/valkey:8-alpine",
+        "kafka":           "bitnami/kafka:3.9",
+        "schema-registry": "confluentinc/cp-schema-registry:7.7.0",
+        "localstack":      "localstack/localstack:3",
+        "dynamodb-local":  "amazon/dynamodb-local:2.5.4"
+      },
+      "usage": {
+        "default":  "docker compose up -d",
+        "mariadb":  "docker compose --profile mariadb up -d",
+        "sqs+sns":  "docker compose --profile sqs --profile sns up -d",
+        "dynamodb": "docker compose --profile dynamodb up -d"
+      }
+    }
+  }
 }
