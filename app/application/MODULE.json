@@ -1,0 +1,12 @@
+{
+  "role": "Spring Boot bootstrapper — wires all modules, global config",
+  "always": true,
+  "allowedDependencies": ["infra-api", "infra-postgres", "infra-valkey", "infra-kafka", "infra-client-api", "infra-dynamodb", "spring-boot-starter-actuator"],
+  "packages": {
+    "application": "@SpringBootApplication entry point"
+  },
+  "keyClasses": ["Application"],
+  "criticalFiles": [
+    "app/application/src/main/resources/application.yml"
+  ]
+}

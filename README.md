@@ -1,6 +1,6 @@
 # java-hexagonal-template
 
-A production-ready **Hexagonal Architecture** project template using a **flat multi-module Maven** layout.
+A production-ready **Hexagonal Architecture** project template using a **multi-module Maven** layout.
 
 ## Stack
 
@@ -23,17 +23,23 @@ A production-ready **Hexagonal Architecture** project template using a **flat mu
 
 ```
 java-hexagonal-template/
-├── core/                    # Business rules — zero framework dependencies
-├── infra-api/               # REST inbound adapter (Spring Web MVC)
-├── infra-kafka/             # Async messaging adapter (Spring Kafka)
-├── infra-postgres/          # Relational persistence adapter (Spring Data JPA + PostgreSQL)
-├── infra-mariadb/           # Relational persistence adapter (MariaDB) — @Profile("mariadb")
-├── infra-valkey/            # Cache adapter (Spring Data Redis / Valkey)
-├── infra-dynamodb/          # NoSQL persistence adapter (AWS DynamoDB) — @Profile("dynamodb")
-├── infra-sqs/               # SQS inbound listener + outbound publisher — @Profile("sqs")
-├── infra-sns/               # SNS fan-out publisher — @Profile("sns")
-├── infra-client-api/        # Outbound HTTP adapter (OpenFeign)
-└── application/             # Spring Boot bootstrapper + configuration
+├── app/
+│   ├── core/                    # Business rules — zero framework dependencies
+│   ├── infra-api/               # REST inbound adapter (Spring Web MVC)
+│   ├── infra-kafka/             # Async messaging adapter (Spring Kafka)
+│   ├── infra-postgres/          # Relational persistence adapter (Spring Data JPA + PostgreSQL)
+│   ├── infra-mariadb/           # Relational persistence adapter (MariaDB) — @Profile("mariadb")
+│   ├── infra-valkey/            # Cache adapter (Spring Data Redis / Valkey)
+│   ├── infra-dynamodb/          # NoSQL persistence adapter (AWS DynamoDB) — @Profile("dynamodb")
+│   ├── infra-sqs/               # SQS inbound listener + outbound publisher — @Profile("sqs")
+│   ├── infra-sns/               # SNS fan-out publisher — @Profile("sns")
+│   ├── infra-client-api/        # Outbound HTTP adapter (OpenFeign)
+│   └── application/             # Spring Boot bootstrapper + configuration
+├── infra/
+│   └── local/
+│       └── docker-compose.yml   # Dev infrastructure (Postgres, Kafka, Valkey, LocalStack…)
+├── config/                      # Static analysis configs (Checkstyle, SpotBugs, PMD)
+└── pom.xml                      # Root Maven POM
 ```
 
 ## Reference Domain: `User`
@@ -57,11 +63,11 @@ Prerequisites: Docker (for Postgres, Valkey/Redis, Kafka).
 
 ```bash
 # Start infrastructure
-docker compose up -d
+docker compose -f infra/local/docker-compose.yml up -d
 
 # Build & run
-./mvnw clean package -pl application -am
-java -jar application/target/application-1.0.0-SNAPSHOT.jar
+mvn clean package -pl app/application -am
+java -jar app/application/target/application-1.0.0-SNAPSHOT.jar
 ```
 
 ## Quality Gates

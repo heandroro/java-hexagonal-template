@@ -1,0 +1,193 @@
+services:
+
+  # ─── Relational DB ───────────────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    container_name: hexagonal-postgres
+    environment:
+      POSTGRES_DB: hexagonal_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./container/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hexagonal_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Relational DB (MariaDB — only with --profile mariadb) ──
+  mariadb:
+    image: mariadb:11-lts
+    container_name: hexagonal-mariadb
+    environment:
+      MARIADB_DATABASE: hexagonal_db
+      MARIADB_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./container/mariadb/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - mariadb
+
+  # ─── Cache (Valkey — Redis-compatible) ───────────────────────
+  valkey:
+    image: valkey/valkey:8-alpine
+    container_name: hexagonal-valkey
+    command: valkey-server /etc/valkey/valkey.conf
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey_data:/data
+      - ./container/valkey/valkey.conf:/etc/valkey/valkey.conf:ro
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Messaging (Kafka — KRaft, no Zookeeper) ─────────────────
+  kafka:
+    image: bitnami/kafka:3.9
+    container_name: hexagonal-kafka
+    environment:
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,INTERNAL://:29092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,INTERNAL://kafka:29092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ─── Confluent Schema Registry (Avro) ────────────────────────
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.7.0
+    container_name: hexagonal-schema-registry
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:29092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    ports:
+      - "8082:8081"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8081/subjects || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ─── AWS SQS + SNS (LocalStack) ──────────────────────────────
+  localstack:
+    image: localstack/localstack:3
+    container_name: hexagonal-localstack
+    environment:
+      SERVICES: sqs,sns
+      DEFAULT_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+    ports:
+      - "4566:4566"
+    volumes:
+      - localstack_data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4566/_localstack/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    profiles:
+      - sqs
+      - sns
+
+  localstack-init:
+    image: amazon/aws-cli:latest
+    container_name: hexagonal-localstack-init
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: dummy
+      AWS_SECRET_ACCESS_KEY: dummy
+      AWS_DEFAULT_REGION: us-east-1
+    entrypoint: ["sh", "/init/create-resources.sh"]
+    volumes:
+      - ./container/localstack/init:/init:ro
+    profiles:
+      - sqs
+      - sns
+
+  # ─── DynamoDB Local (only with --profile dynamodb) ───────────
+  dynamodb-local:
+    image: amazon/dynamodb-local:2.5.4
+    container_name: hexagonal-dynamodb
+    command: "-jar DynamoDBLocal.jar -sharedDb -inMemory"
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - dynamodb
+
+  dynamodb-init:
+    image: amazon/aws-cli:latest
+    container_name: hexagonal-dynamodb-init
+    depends_on:
+      dynamodb-local:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: dummy
+      AWS_SECRET_ACCESS_KEY: dummy
+      AWS_DEFAULT_REGION: us-east-1
+    entrypoint: ["sh", "/init/create-tables.sh"]
+    volumes:
+      - ./container/dynamodb/init:/init:ro
+    profiles:
+      - dynamodb
+
+  # ─── WireMock (mock do serviço HTTP externo) ─────────────────
+  wiremock:
+    image: wiremock/wiremock:3.9.2-alpine
+    container_name: hexagonal-wiremock
+    ports:
+      - "8089:8080"
+    volumes:
+      - ./container/wiremock/mappings:/home/wiremock/mappings:ro
+      - ./container/wiremock/__files:/home/wiremock/__files:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/__admin/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  mariadb_data:
+  valkey_data:
+  kafka_data:
+  localstack_data:

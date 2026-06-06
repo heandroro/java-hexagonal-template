@@ -1,7 +1,7 @@
 {
   "templateName": "java-hexagonal-template",
   "version": "1.0.0-SNAPSHOT",
-  "description": "Flat multi-module Maven scaffold for Hexagonal Architecture with Spring Boot",
+  "description": "Multi-module Maven scaffold for Hexagonal Architecture with Spring Boot",
 
   "stack": {
     "language": "Java 21",
@@ -31,17 +31,17 @@
   ],
 
   "modules": [
-    { "name": "core",            "always": true,                                           "manifest": "core/MODULE.json" },
-    { "name": "application",     "always": true,                                           "manifest": "application/MODULE.json" },
-    { "name": "infra-api",       "includeWhen": "appType = api",                           "manifest": "infra-api/MODULE.json" },
-    { "name": "infra-postgres",  "includeWhen": "database = postgres",                    "manifest": "infra-postgres/MODULE.json" },
-    { "name": "infra-mariadb",   "includeWhen": "database = mariadb",                     "manifest": "infra-mariadb/MODULE.json" },
-    { "name": "infra-dynamodb",  "includeWhen": "database = dynamodb",                    "manifest": "infra-dynamodb/MODULE.json" },
-    { "name": "infra-valkey",    "includeWhen": "cache = server",                         "manifest": "infra-valkey/MODULE.json" },
-    { "name": "infra-kafka",     "includeWhen": "broker = kafka",                          "manifest": "infra-kafka/MODULE.json" },
-    { "name": "infra-sqs",      "includeWhen": "broker = sqs",                            "manifest": "infra-sqs/MODULE.json" },
-    { "name": "infra-sns",      "includeWhen": "broker = sns",                            "manifest": "infra-sns/MODULE.json" },
-    { "name": "infra-client-api","includeWhen": "httpClient = feign",                     "manifest": "infra-client-api/MODULE.json" }
+    { "name": "core",            "always": true,                                           "manifest": "app/core/MODULE.json" },
+    { "name": "application",     "always": true,                                           "manifest": "app/application/MODULE.json" },
+    { "name": "infra-api",       "includeWhen": "appType = api",                           "manifest": "app/infra-api/MODULE.json" },
+    { "name": "infra-postgres",  "includeWhen": "database = postgres",                    "manifest": "app/infra-postgres/MODULE.json" },
+    { "name": "infra-mariadb",   "includeWhen": "database = mariadb",                     "manifest": "app/infra-mariadb/MODULE.json" },
+    { "name": "infra-dynamodb",  "includeWhen": "database = dynamodb",                    "manifest": "app/infra-dynamodb/MODULE.json" },
+    { "name": "infra-valkey",    "includeWhen": "cache = server",                         "manifest": "app/infra-valkey/MODULE.json" },
+    { "name": "infra-kafka",     "includeWhen": "broker = kafka",                          "manifest": "app/infra-kafka/MODULE.json" },
+    { "name": "infra-sqs",      "includeWhen": "broker = sqs",                            "manifest": "app/infra-sqs/MODULE.json" },
+    { "name": "infra-sns",      "includeWhen": "broker = sns",                            "manifest": "app/infra-sns/MODULE.json" },
+    { "name": "infra-client-api","includeWhen": "httpClient = feign",                     "manifest": "app/infra-client-api/MODULE.json" }
   ],
 
   "namingConventions": [
@@ -79,22 +79,23 @@
   },
 
   "criticalFiles": [
+    "GENERATOR.json",
     "pom.xml",
-    "core/pom.xml",
-    "application/src/main/resources/application.yml",
-    "docker-compose.yml",
-    "core/src/main/java/com/mycompany/template/core/domain/User.java",
-    "core/src/main/java/com/mycompany/template/core/ports/in/CreateUserUseCase.java",
-    "core/src/main/java/com/mycompany/template/core/ports/out/UserRepositoryPort.java",
-    "core/src/main/java/com/mycompany/template/core/usecase/CreateUserUseCaseImpl.java",
-    "infra-postgres/src/main/java/com/mycompany/template/infra/postgres/adapter/UserRepositoryAdapter.java",
-    "infra-api/src/main/java/com/mycompany/template/infra/api/controller/UserController.java",
+    "app/core/pom.xml",
+    "app/application/src/main/resources/application.yml",
+    "infra/local/docker-compose.yml",
+    "app/core/src/main/java/com/mycompany/template/core/domain/User.java",
+    "app/core/src/main/java/com/mycompany/template/core/ports/in/CreateUserUseCase.java",
+    "app/core/src/main/java/com/mycompany/template/core/ports/out/UserRepositoryPort.java",
+    "app/core/src/main/java/com/mycompany/template/core/usecase/CreateUserUseCaseImpl.java",
+    "app/infra-postgres/src/main/java/com/mycompany/template/infra/postgres/adapter/UserRepositoryAdapter.java",
+    "app/infra-api/src/main/java/com/mycompany/template/infra/api/controller/UserController.java",
     "AGENTS.md",
     "config/checkstyle/checkstyle.xml",
     "config/checkstyle/suppressions.xml",
     "config/spotbugs/exclude.xml",
     "config/pmd/ruleset.xml",
-    "application/src/test/java/com/mycompany/template/architecture/HexagonalArchitectureTest.java"
+    "app/application/src/test/java/com/mycompany/template/architecture/HexagonalArchitectureTest.java"
   ],
 
   "localDev": {
@@ -125,10 +126,10 @@
         "dynamodb-local":  "amazon/dynamodb-local:2.5.4"
       },
       "usage": {
-        "default":  "docker compose up -d",
-        "mariadb":  "docker compose --profile mariadb up -d",
-        "sqs+sns":  "docker compose --profile sqs --profile sns up -d",
-        "dynamodb": "docker compose --profile dynamodb up -d"
+        "default":  "docker compose -f infra/local/docker-compose.yml up -d",
+        "mariadb":  "docker compose -f infra/local/docker-compose.yml --profile mariadb up -d",
+        "sqs+sns":  "docker compose -f infra/local/docker-compose.yml --profile sqs --profile sns up -d",
+        "dynamodb": "docker compose -f infra/local/docker-compose.yml --profile dynamodb up -d"
       }
     }
   }
