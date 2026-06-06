@@ -90,7 +90,27 @@ Se houver violação de qualquer uma dessas diretrizes, pare a geração imediat
 
 ---
 
-## 🔀 7. Git Workflow
+## 🔍 7. Qualidade de Código Estática
+
+Ferramentas configuradas em `pluginManagement` do `pom.xml` raiz:
+
+| Ferramenta | Execução | Regras |
+| :--- | :--- | :--- |
+| **Checkstyle** | Automática (`verify`) | `config/checkstyle/checkstyle.xml` — imports, braces, line length ≤ 120 |
+| **SpotBugs** | Manual (`mvn spotbugs:check`) | `config/spotbugs/exclude.xml` — threshold High, exclui entities e Avro |
+| **PMD** | Manual (`mvn pmd:check`) | `config/pmd/ruleset.xml` — complexity ≤ 15, empty catch, unused vars |
+
+> **Compat JDK**: SpotBugs 4.8.x e PMD 7.3.x não suportam class-file version 69 (JDK 25) para resolução de tipos.
+> Rode-os manualmente no CI com JDK ≤ 23. Quando esses projetos adicionarem suporte ao JDK 25, reabilitar as execuções em `<build><plugins>` do `pom.xml` raiz.
+
+Configs de supressão:
+- Checkstyle suprime: `target/`, `*MapperImpl.java`, `avro/`
+- SpotBugs exclui: classes `*.entity.*`, `*MapperImpl`, `*Application`, `*.avro.*`
+- PMD exclui: `**/*MapperImpl.java` (código gerado pelo MapStruct)
+
+---
+
+## 🔀 8. Git Workflow
 
 - Sempre criar uma nova branch antes de iniciar qualquer feature, fix, doc ou refactor.
 - Nunca commitar diretamente em `main`.

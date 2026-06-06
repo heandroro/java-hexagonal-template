@@ -71,7 +71,8 @@ class CreateUserUseCaseImplTest {
             var existingUser = Instancio.create(User.class);
             given(userRepositoryPort.existsByEmail(existingUser.email())).willReturn(true);
 
-            assertThatThrownBy(() -> createUserUseCase.execute(new CreateUserCommand(existingUser.name(), existingUser.email())))
+            var command = new CreateUserCommand(existingUser.name(), existingUser.email());
+            assertThatThrownBy(() -> createUserUseCase.execute(command))
                     .isInstanceOf(UserAlreadyExistsException.class)
                     .hasMessageContaining(existingUser.email());
         }

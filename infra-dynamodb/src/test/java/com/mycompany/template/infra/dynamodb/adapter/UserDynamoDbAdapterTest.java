@@ -118,7 +118,8 @@ class UserDynamoDbAdapterTest {
 
         @Test
         void should_returnEmpty_when_pageExceedsTotalItems() {
-            SdkIterable<UserDynamoDbEntity> items = () -> List.of(Instancio.create(UserDynamoDbEntity.class)).iterator();
+            var entity = Instancio.create(UserDynamoDbEntity.class);
+            SdkIterable<UserDynamoDbEntity> items = () -> List.of(entity).iterator();
             given(table.scan()).willReturn(scanIterable);
             given(scanIterable.items()).willReturn(items);
 
