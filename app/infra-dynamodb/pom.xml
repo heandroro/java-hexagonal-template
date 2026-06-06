@@ -8,35 +8,41 @@
         <groupId>com.mycompany.template</groupId>
         <artifactId>java-hexagonal-template</artifactId>
         <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>core</artifactId>
+    <artifactId>infra-dynamodb</artifactId>
     <packaging>jar</packaging>
 
-    <name>core</name>
-    <description>Business rules — framework-agnostic</description>
+    <name>infra-dynamodb</name>
+    <description>NoSQL persistence adapter — AWS DynamoDB (Spring Cloud AWS)</description>
 
     <dependencies>
-        <!-- Jakarta standard DI annotations only — NO Spring, NO JPA, NO Jackson -->
         <dependency>
-            <groupId>jakarta.inject</groupId>
-            <artifactId>jakarta.inject-api</artifactId>
+            <groupId>com.mycompany.template</groupId>
+            <artifactId>core</artifactId>
+        </dependency>
+
+        <!-- Spring Cloud AWS DynamoDB -->
+        <dependency>
+            <groupId>io.awspring.cloud</groupId>
+            <artifactId>spring-cloud-aws-starter-dynamodb</artifactId>
+        </dependency>
+
+        <!-- MapStruct -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
         </dependency>
 
         <!-- Test -->
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

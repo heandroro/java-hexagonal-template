@@ -232,7 +232,7 @@ Follow this exact order — do not skip steps or create files out of sequence:
 | File | Purpose |
 | --- | --- |
 | `TEMPLATE-MANIFEST.json` | Root index: stack, replace tokens, naming/mapper/interface rules, module list |
-| `{module}/MODULE.json` | Per-module detail: role, packages, keyClasses, config |
+| `app/{module}/MODULE.json` | Per-module detail: role, packages, keyClasses, config |
 | `AGENTS.md` | Prescriptive rules — what to do and what to avoid |
 | `ARCHITECTURE.md` | Narrative companion — why the architecture is shaped this way |
 

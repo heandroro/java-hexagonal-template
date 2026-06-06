@@ -8,17 +8,14 @@
         <groupId>com.mycompany.template</groupId>
         <artifactId>java-hexagonal-template</artifactId>
         <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>infra-client-api</artifactId>
+    <artifactId>infra-valkey</artifactId>
     <packaging>jar</packaging>
 
-    <name>infra-client-api</name>
-    <description>Outbound HTTP integrations — OpenFeign</description>
-
-    <properties>
-        <spring-cloud.version>2025.0.0</spring-cloud.version>
-    </properties>
+    <name>infra-valkey</name>
+    <description>Cache layer — Spring Data Redis (Valkey-compatible)</description>
 
     <dependencies>
         <dependency>
@@ -27,10 +24,20 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
+
+        <!-- Jackson for Redis serialization -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
 
         <!-- Test -->
         <dependency>
@@ -38,17 +45,10 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.instancio</groupId>
+            <artifactId>instancio-junit</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 </project>

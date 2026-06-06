@@ -8,13 +8,14 @@
         <groupId>com.mycompany.template</groupId>
         <artifactId>java-hexagonal-template</artifactId>
         <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>infra-mariadb</artifactId>
+    <artifactId>infra-postgres</artifactId>
     <packaging>jar</packaging>
 
-    <name>infra-mariadb</name>
-    <description>Relational persistence — Spring Data JPA + MariaDB</description>
+    <name>infra-postgres</name>
+    <description>Relational persistence — Spring Data JPA + PostgreSQL</description>
 
     <dependencies>
         <dependency>
@@ -27,8 +28,8 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.mariadb.jdbc</groupId>
-            <artifactId>mariadb-java-client</artifactId>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
 
@@ -61,7 +62,7 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>mariadb</artifactId>
+            <artifactId>postgresql</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

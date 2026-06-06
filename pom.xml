@@ -13,17 +13,17 @@
     <description>Hexagonal Architecture multi-module template</description>
 
     <modules>
-        <module>core</module>
-        <module>infra-api</module>
-        <module>infra-kafka</module>
-        <module>infra-postgres</module>
-        <module>infra-mariadb</module>
-        <module>infra-valkey</module>
-        <module>infra-client-api</module>
-        <module>infra-dynamodb</module>
-        <module>infra-sqs</module>
-        <module>infra-sns</module>
-        <module>application</module>
+        <module>app/core</module>
+        <module>app/infra-api</module>
+        <module>app/infra-kafka</module>
+        <module>app/infra-postgres</module>
+        <module>app/infra-mariadb</module>
+        <module>app/infra-valkey</module>
+        <module>app/infra-client-api</module>
+        <module>app/infra-dynamodb</module>
+        <module>app/infra-sqs</module>
+        <module>app/infra-sns</module>
+        <module>app/application</module>
     </modules>
 
     <properties>

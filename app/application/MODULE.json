@@ -7,6 +7,6 @@
   },
   "keyClasses": ["Application"],
   "criticalFiles": [
-    "application/src/main/resources/application.yml"
+    "app/application/src/main/resources/application.yml"
   ]
 }

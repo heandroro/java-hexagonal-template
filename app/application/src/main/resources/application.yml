@@ -2,6 +2,10 @@ spring:
   application:
     name: java-hexagonal-template
 
+  docker:
+    compose:
+      file: infra/local/docker-compose.yml
+
   datasource:
     url: jdbc:postgresql://localhost:5432/hexagonal_db
     username: ${DB_USERNAME:postgres}
