@@ -1,6 +1,7 @@
 package com.mycompany.template.core.usecase;
 
 import com.mycompany.template.core.domain.User;
+import com.mycompany.template.core.exception.UserAlreadyExistsException;
 import com.mycompany.template.core.ports.in.CreateUserUseCase;
 import com.mycompany.template.core.ports.out.UserCachePort;
 import com.mycompany.template.core.ports.out.UserRepositoryPort;
@@ -23,7 +24,7 @@ public class CreateUserUseCaseImpl implements CreateUserUseCase {
     @Override
     public User execute(String name, String email) {
         if (userRepositoryPort.existsByEmail(email)) {
-            throw new IllegalArgumentException("A user with email '" + email + "' already exists.");
+            throw new UserAlreadyExistsException(email);
         }
 
         User user = new User(UUID.randomUUID(), name, email, LocalDateTime.now());

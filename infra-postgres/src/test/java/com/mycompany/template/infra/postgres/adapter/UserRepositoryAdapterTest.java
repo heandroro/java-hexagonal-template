@@ -11,11 +11,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -72,6 +76,34 @@ class UserRepositoryAdapterTest {
     }
 
     @Nested
+    class FindAll {
+
+        @Test
+        void should_returnMappedUsers_when_entitiesExist() {
+            var entity = Instancio.create(UserEntity.class);
+            var user = Instancio.create(User.class);
+            var jpaPage = new PageImpl<>(List.of(entity));
+            given(userJpaRepository.findAll(any(Pageable.class))).willReturn(jpaPage);
+            given(userPostgresMapper.toDomain(entity)).willReturn(user);
+
+            var result = userRepositoryAdapter.findAll(0, 10);
+
+            assertThat(result).containsExactly(user);
+        }
+    }
+
+    @Nested
+    class CountAll {
+
+        @Test
+        void should_delegateCountToRepository() {
+            given(userJpaRepository.count()).willReturn(42L);
+
+            assertThat(userRepositoryAdapter.countAll()).isEqualTo(42L);
+        }
+    }
+
+    @Nested
     class ExistsByEmail {
 
         @Test
@@ -79,6 +111,19 @@ class UserRepositoryAdapterTest {
             given(userJpaRepository.existsByEmail("test@example.com")).willReturn(true);
 
             assertThat(userRepositoryAdapter.existsByEmail("test@example.com")).isTrue();
+        }
+    }
+
+    @Nested
+    class DeleteById {
+
+        @Test
+        void should_delegateDeletionToRepository() {
+            var id = UUID.randomUUID();
+
+            userRepositoryAdapter.deleteById(id);
+
+            then(userJpaRepository).should().deleteById(id);
         }
     }
 }

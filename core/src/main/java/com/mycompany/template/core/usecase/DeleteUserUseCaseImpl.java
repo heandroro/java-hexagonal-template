@@ -1,8 +1,7 @@
 package com.mycompany.template.core.usecase;
 
-import com.mycompany.template.core.domain.User;
 import com.mycompany.template.core.exception.UserNotFoundException;
-import com.mycompany.template.core.ports.in.FindUserUseCase;
+import com.mycompany.template.core.ports.in.DeleteUserUseCase;
 import com.mycompany.template.core.ports.out.UserCachePort;
 import com.mycompany.template.core.ports.out.UserRepositoryPort;
 import jakarta.inject.Named;
@@ -10,20 +9,22 @@ import jakarta.inject.Named;
 import java.util.UUID;
 
 @Named
-public class FindUserUseCaseImpl implements FindUserUseCase {
+public class DeleteUserUseCaseImpl implements DeleteUserUseCase {
 
     private final UserRepositoryPort userRepositoryPort;
     private final UserCachePort userCachePort;
 
-    public FindUserUseCaseImpl(UserRepositoryPort userRepositoryPort, UserCachePort userCachePort) {
+    public DeleteUserUseCaseImpl(UserRepositoryPort userRepositoryPort, UserCachePort userCachePort) {
         this.userRepositoryPort = userRepositoryPort;
         this.userCachePort = userCachePort;
     }
 
     @Override
-    public User execute(UUID id) {
-        return userCachePort.get(id)
-                .orElseGet(() -> userRepositoryPort.findById(id)
-                        .orElseThrow(() -> new UserNotFoundException(id)));
+    public void execute(UUID id) {
+        if (userRepositoryPort.findById(id).isEmpty()) {
+            throw new UserNotFoundException(id);
+        }
+        userRepositoryPort.deleteById(id);
+        userCachePort.evict(id);
     }
 }

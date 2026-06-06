@@ -98,4 +98,61 @@ class UserDynamoDbAdapterTest {
             assertThat(userDynamoDbAdapter.existsByEmail("missing@example.com")).isFalse();
         }
     }
+
+    @Nested
+    class FindAll {
+
+        @Test
+        void should_returnPagedSlice_when_itemsExist() {
+            var entity = Instancio.create(UserDynamoDbEntity.class);
+            var user = Instancio.create(User.class);
+            SdkIterable<UserDynamoDbEntity> items = () -> List.of(entity).iterator();
+            given(table.scan()).willReturn(scanIterable);
+            given(scanIterable.items()).willReturn(items);
+            given(userDynamoDbMapper.toDomain(entity)).willReturn(user);
+
+            var result = userDynamoDbAdapter.findAll(0, 10);
+
+            assertThat(result).containsExactly(user);
+        }
+
+        @Test
+        void should_returnEmpty_when_pageExceedsTotalItems() {
+            SdkIterable<UserDynamoDbEntity> items = () -> List.of(Instancio.create(UserDynamoDbEntity.class)).iterator();
+            given(table.scan()).willReturn(scanIterable);
+            given(scanIterable.items()).willReturn(items);
+
+            var result = userDynamoDbAdapter.findAll(1, 10);
+
+            assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    class CountAll {
+
+        @Test
+        void should_returnTotalCount() {
+            var e1 = Instancio.create(UserDynamoDbEntity.class);
+            var e2 = Instancio.create(UserDynamoDbEntity.class);
+            SdkIterable<UserDynamoDbEntity> items = () -> List.of(e1, e2).iterator();
+            given(table.scan()).willReturn(scanIterable);
+            given(scanIterable.items()).willReturn(items);
+
+            assertThat(userDynamoDbAdapter.countAll()).isEqualTo(2L);
+        }
+    }
+
+    @Nested
+    class DeleteById {
+
+        @Test
+        void should_deleteItemByKey() {
+            var id = UUID.randomUUID();
+
+            userDynamoDbAdapter.deleteById(id);
+
+            then(table).should().deleteItem(any(Key.class));
+        }
+    }
 }

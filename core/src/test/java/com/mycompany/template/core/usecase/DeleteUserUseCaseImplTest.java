@@ -15,13 +15,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
-class FindUserUseCaseImplTest {
+class DeleteUserUseCaseImplTest {
 
     @Mock
     private UserRepositoryPort userRepositoryPort;
@@ -30,44 +29,32 @@ class FindUserUseCaseImplTest {
     private UserCachePort userCachePort;
 
     @InjectMocks
-    private FindUserUseCaseImpl findUserUseCase;
+    private DeleteUserUseCaseImpl deleteUserUseCase;
 
     @Nested
-    class WhenCacheHit {
+    class WhenUserExists {
 
         @Test
-        void should_returnUser_when_cacheHit() {
+        void should_deleteFromRepositoryAndEvictCache_when_userFound() {
             var user = Instancio.create(User.class);
-            given(userCachePort.get(user.id())).willReturn(Optional.of(user));
+            given(userRepositoryPort.findById(user.id())).willReturn(Optional.of(user));
 
-            var result = findUserUseCase.execute(user.id());
+            deleteUserUseCase.execute(user.id());
 
-            assertThat(result).isEqualTo(user);
-            then(userRepositoryPort).shouldHaveNoInteractions();
+            then(userRepositoryPort).should().deleteById(user.id());
+            then(userCachePort).should().evict(user.id());
         }
     }
 
     @Nested
-    class WhenCacheMiss {
+    class WhenUserDoesNotExist {
 
         @Test
-        void should_fallbackToRepository_when_cacheMiss() {
-            var user = Instancio.create(User.class);
-            given(userCachePort.get(user.id())).willReturn(Optional.empty());
-            given(userRepositoryPort.findById(user.id())).willReturn(Optional.of(user));
-
-            var result = findUserUseCase.execute(user.id());
-
-            assertThat(result).isEqualTo(user);
-        }
-
-        @Test
-        void should_throwUserNotFoundException_when_notFoundInCacheOrRepository() {
+        void should_throwUserNotFoundException_when_idNotFound() {
             var id = UUID.randomUUID();
-            given(userCachePort.get(id)).willReturn(Optional.empty());
             given(userRepositoryPort.findById(id)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> findUserUseCase.execute(id))
+            assertThatThrownBy(() -> deleteUserUseCase.execute(id))
                     .isInstanceOf(UserNotFoundException.class)
                     .hasMessageContaining(id.toString());
         }

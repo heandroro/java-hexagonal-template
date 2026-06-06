@@ -1,6 +1,7 @@
 package com.mycompany.template.core.usecase;
 
 import com.mycompany.template.core.domain.User;
+import com.mycompany.template.core.exception.UserAlreadyExistsException;
 import com.mycompany.template.core.ports.out.UserCachePort;
 import com.mycompany.template.core.ports.out.UserRepositoryPort;
 import org.instancio.Instancio;
@@ -50,12 +51,12 @@ class CreateUserUseCaseImplTest {
     class WhenEmailAlreadyExists {
 
         @Test
-        void should_throwIllegalArgumentException_when_emailAlreadyExists() {
+        void should_throwUserAlreadyExistsException_when_emailAlreadyExists() {
             var existingUser = Instancio.create(User.class);
             given(userRepositoryPort.existsByEmail(existingUser.email())).willReturn(true);
 
             assertThatThrownBy(() -> createUserUseCase.execute(existingUser.name(), existingUser.email()))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(UserAlreadyExistsException.class)
                     .hasMessageContaining(existingUser.email());
         }
     }

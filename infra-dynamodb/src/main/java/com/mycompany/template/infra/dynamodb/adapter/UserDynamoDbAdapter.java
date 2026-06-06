@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -42,5 +43,26 @@ public class UserDynamoDbAdapter implements UserRepositoryPort {
     public boolean existsByEmail(String email) {
         return table.scan().items().stream()
                 .anyMatch(entity -> entity.getEmail().equals(email));
+    }
+
+    @Override
+    public List<User> findAll(int page, int size) {
+        var all = table.scan().items().stream()
+                .map(userDynamoDbMapper::toDomain)
+                .toList();
+        int from = Math.min(page * size, all.size());
+        int to = Math.min(from + size, all.size());
+        return all.subList(from, to);
+    }
+
+    @Override
+    public long countAll() {
+        return table.scan().items().stream().count();
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        Key key = Key.builder().partitionValue(id.toString()).build();
+        table.deleteItem(key);
     }
 }

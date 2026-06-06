@@ -4,8 +4,11 @@ import com.mycompany.template.core.domain.User;
 import com.mycompany.template.core.ports.out.UserRepositoryPort;
 import com.mycompany.template.infra.postgres.mapper.UserPostgresMapper;
 import com.mycompany.template.infra.postgres.repository.UserJpaRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,5 +39,24 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     @Override
     public boolean existsByEmail(String email) {
         return userJpaRepository.existsByEmail(email);
+    }
+
+    @Override
+    public List<User> findAll(int page, int size) {
+        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return userJpaRepository.findAll(pageable)
+                .stream()
+                .map(userPostgresMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public long countAll() {
+        return userJpaRepository.count();
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        userJpaRepository.deleteById(id);
     }
 }
