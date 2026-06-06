@@ -29,12 +29,15 @@ spring:
       group-id: hexagonal-template-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
       properties:
-        spring.json.trusted.packages: "com.mycompany.template.infra.kafka.dto"
+        schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8082}
+        specific.avro.reader: true
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8082}
 
   cloud:
     aws:
@@ -45,6 +48,10 @@ spring:
         secret-key: ${AWS_SECRET_ACCESS_KEY:dummy}
       dynamodb:
         endpoint: ${DYNAMODB_ENDPOINT:}
+      sqs:
+        endpoint: ${SQS_ENDPOINT:}
+      sns:
+        endpoint: ${SNS_ENDPOINT:}
 
 app:
   cache:
@@ -53,6 +60,12 @@ app:
   kafka:
     topics:
       user-created: user.created
+  sqs:
+    queues:
+      user-events: ${SQS_USER_EVENTS_QUEUE:user-events-queue}
+  sns:
+    topics:
+      user-events: ${SNS_USER_EVENTS_TOPIC_ARN:arn:aws:sns:us-east-1:000000000000:user-events-topic}
   clients:
     external-user-service:
       url: ${EXTERNAL_USER_SERVICE_URL:http://localhost:8081}

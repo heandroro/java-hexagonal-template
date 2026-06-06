@@ -1,0 +1,14 @@
+{
+  "role": "Cache adapter — Spring Data Redis (Valkey-compatible)",
+  "includeWhen": "cache = server",
+  "allowedDependencies": ["core", "spring-boot-starter-data-redis"],
+  "packages": {
+    "infra.valkey.adapter": "Outbound cache adapters (*Adapter) implementing core *Port"
+  },
+  "keyClasses": ["UserCacheAdapter"],
+  "config": {
+    "ttlProperty": "app.cache.user.ttl",
+    "ttlDefault": "PT30M",
+    "ttlEnvVar": "USER_CACHE_TTL"
+  }
+}

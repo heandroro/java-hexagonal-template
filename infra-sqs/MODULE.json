@@ -1,0 +1,18 @@
+{
+  "role": "AWS SQS consumer and publisher (Spring Cloud AWS)",
+  "includeWhen": "broker = sqs",
+  "allowedDependencies": ["core", "spring-cloud-aws-starter-sqs", "mapstruct"],
+  "packages": {
+    "infra.sqs.listener":  "Inbound @SqsListener (*Listener) — no interface",
+    "infra.sqs.publisher": "UserSqsPublisher @Profile('sqs') + NoOpUserQueuePublisher @ConditionalOnMissingBean",
+    "infra.sqs.dto":       "SQS message records",
+    "infra.sqs.mapper":    "MapStruct mappers (UserSqsMessage ↔ Core Domain / Command)"
+  },
+  "keyClasses": ["UserSqsListener", "UserSqsPublisher", "NoOpUserQueuePublisher", "UserSqsMessage", "UserSqsMapper"],
+  "profileIsolation": "sqs",
+  "config": {
+    "queueProperty": "app.sqs.queues.user-events",
+    "endpointProperty": "spring.cloud.aws.sqs.endpoint",
+    "endpointDefault": "http://localhost:4566 (LocalStack)"
+  }
+}

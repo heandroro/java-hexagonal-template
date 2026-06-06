@@ -1,0 +1,24 @@
+{
+  "role": "Business rules — 100% framework-agnostic",
+  "packaging": "jar",
+  "allowedDependencies": ["jakarta.inject-api"],
+  "forbiddenPackages": ["org.springframework.*", "jakarta.persistence.*", "com.fasterxml.jackson.*"],
+  "packages": {
+    "core.command":   "Input command records (*Command) — plain Java, no annotations",
+    "core.domain":    "Domain entities and value objects — zero annotations",
+    "core.exception": "Domain exceptions extending RuntimeException",
+    "core.ports.in":  "Inbound port interfaces (*UseCase)",
+    "core.ports.out": "Outbound port interfaces (*Port)",
+    "core.usecase":   "Use-case implementations (*UseCaseImpl) — @Named, single clean constructor"
+  },
+  "keyClasses": [
+    "User", "UserPage",
+    "CreateUserCommand", "UpdateUserCommand", "PatchUserCommand",
+    "CreateUserUseCase", "FindUserUseCase", "ListUsersUseCase",
+    "UpdateUserUseCase", "PatchUserUseCase", "DeleteUserUseCase",
+    "UserRepositoryPort", "UserCachePort",
+    "UserKafkaPublisherPort", "UserQueuePublisherPort", "UserNotificationPublisherPort",
+    "CreateUserUseCaseImpl", "FindUserUseCaseImpl", "ListUsersUseCaseImpl",
+    "UpdateUserUseCaseImpl", "PatchUserUseCaseImpl", "DeleteUserUseCaseImpl"
+  ]
+}

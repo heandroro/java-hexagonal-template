@@ -1,0 +1,10 @@
+{
+  "role": "Outbound HTTP client integrations — OpenFeign",
+  "includeWhen": "httpClient = feign",
+  "allowedDependencies": ["core", "spring-cloud-starter-openfeign"],
+  "packages": {
+    "infra.client.feign":     "@FeignClient interfaces",
+    "infra.client.feign.dto": "Response records from external services"
+  },
+  "keyClasses": ["ExternalUserClient", "ExternalUserResponse"]
+}

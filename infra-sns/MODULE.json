@@ -1,0 +1,17 @@
+{
+  "role": "AWS SNS fan-out publisher (Spring Cloud AWS)",
+  "includeWhen": "broker = sns",
+  "allowedDependencies": ["core", "spring-cloud-aws-starter-sns", "mapstruct"],
+  "packages": {
+    "infra.sns.publisher": "UserSnsPublisher @Profile('sns') + NoOpUserNotificationPublisher @ConditionalOnMissingBean",
+    "infra.sns.dto":       "SNS notification records",
+    "infra.sns.mapper":    "MapStruct mappers (UserSnsNotification ↔ Core Domain)"
+  },
+  "keyClasses": ["UserSnsPublisher", "NoOpUserNotificationPublisher", "UserSnsNotification", "UserSnsMapper"],
+  "profileIsolation": "sns",
+  "config": {
+    "topicProperty": "app.sns.topics.user-events",
+    "endpointProperty": "spring.cloud.aws.sns.endpoint",
+    "endpointDefault": "http://localhost:4566 (LocalStack)"
+  }
+}

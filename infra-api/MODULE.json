@@ -1,0 +1,17 @@
+{
+  "role": "Inbound REST adapter — Spring Web MVC",
+  "includeWhen": "appType = api",
+  "allowedDependencies": ["core", "spring-boot-starter-web", "spring-boot-starter-validation", "spring-data-commons", "mapstruct"],
+  "packages": {
+    "infra.api.controller": "Concrete REST controllers (*Controller) — no interface",
+    "infra.api.dto":        "Request/Response records",
+    "infra.api.handler":    "@RestControllerAdvice — RFC 9457 ProblemDetail error mapping",
+    "infra.api.mapper":     "MapStruct mappers (Request DTO → Command / Domain → Response DTO)"
+  },
+  "keyClasses": [
+    "UserController",
+    "CreateUserRequest", "UpdateUserRequest", "PatchUserRequest", "UserResponse",
+    "ApiExceptionHandler",
+    "UserApiMapper"
+  ]
+}
