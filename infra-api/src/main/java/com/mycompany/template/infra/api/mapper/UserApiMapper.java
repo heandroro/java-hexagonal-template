@@ -1,9 +1,9 @@
 package com.mycompany.template.infra.api.mapper;
 
 import com.mycompany.template.core.domain.User;
-import com.mycompany.template.core.ports.in.CreateUserCommand;
-import com.mycompany.template.core.ports.in.PatchUserCommand;
-import com.mycompany.template.core.ports.in.UpdateUserCommand;
+import com.mycompany.template.core.command.CreateUserCommand;
+import com.mycompany.template.core.command.PatchUserCommand;
+import com.mycompany.template.core.command.UpdateUserCommand;
 import com.mycompany.template.infra.api.dto.CreateUserRequest;
 import com.mycompany.template.infra.api.dto.PatchUserRequest;
 import com.mycompany.template.infra.api.dto.UpdateUserRequest;

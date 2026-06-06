@@ -1,5 +1,6 @@
 package com.mycompany.template.core.ports.in;
 
+import com.mycompany.template.core.command.PatchUserCommand;
 import com.mycompany.template.core.domain.User;
 
 import java.util.UUID;

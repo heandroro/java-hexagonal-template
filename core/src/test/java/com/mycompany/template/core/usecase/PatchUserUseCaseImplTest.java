@@ -3,7 +3,7 @@ package com.mycompany.template.core.usecase;
 import com.mycompany.template.core.domain.User;
 import com.mycompany.template.core.exception.UserAlreadyExistsException;
 import com.mycompany.template.core.exception.UserNotFoundException;
-import com.mycompany.template.core.ports.in.PatchUserCommand;
+import com.mycompany.template.core.command.PatchUserCommand;
 import com.mycompany.template.core.ports.out.UserCachePort;
 import com.mycompany.template.core.ports.out.UserRepositoryPort;
 import org.instancio.Instancio;

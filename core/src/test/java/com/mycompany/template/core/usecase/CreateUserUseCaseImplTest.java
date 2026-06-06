@@ -2,7 +2,7 @@ package com.mycompany.template.core.usecase;
 
 import com.mycompany.template.core.domain.User;
 import com.mycompany.template.core.exception.UserAlreadyExistsException;
-import com.mycompany.template.core.ports.in.CreateUserCommand;
+import com.mycompany.template.core.command.CreateUserCommand;
 import com.mycompany.template.core.ports.out.UserCachePort;
 import com.mycompany.template.core.ports.out.UserRepositoryPort;
 import org.instancio.Instancio;
