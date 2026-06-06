@@ -29,7 +29,7 @@ spring-shell.log
 *.iws
 *.iml
 *.ipr
-out/
+/out/
 
 # ============================================================
 # Eclipse
@@ -79,3 +79,7 @@ logs/
 *.jks
 *.keystore
 *.truststore
+
+
+# APM dependencies
+apm_modules/

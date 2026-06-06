@@ -1,0 +1,9 @@
+spring:
+  docker:
+    compose:
+      lifecycle-management: start-and-stop
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
