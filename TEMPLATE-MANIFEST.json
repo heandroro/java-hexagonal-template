@@ -79,6 +79,7 @@
   },
 
   "criticalFiles": [
+    "GENERATOR.json",
     "pom.xml",
     "app/core/pom.xml",
     "app/application/src/main/resources/application.yml",

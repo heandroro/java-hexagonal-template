@@ -110,6 +110,27 @@ Configs de supressão:
 
 ---
 
+## 🧙 9. Setup Wizard — Configuração de Novo Projeto
+
+Ao iniciar a configuração de um **novo projeto a partir deste template**, leia `GENERATOR.json` e conduza o usuário pelo seguinte fluxo:
+
+1. **Apresentar os perfis pré-definidos** (`profiles[]`) e perguntar se algum se encaixa.
+2. **Se nenhum perfil servir**, fazer as perguntas de `questions[]` em ordem, uma por vez.
+3. **Consolidar módulos:** união de todos os `modules[]` das opções escolhidas + sempre incluir `core` e `application`.
+4. **Consolidar docker services:** união de todos os `dockerServices[]` selecionados.
+5. **Apresentar resumo ao usuário** antes de executar qualquer mudança:
+   - Módulos a manter
+   - Módulos a remover (`app/<módulo>/` e entradas no `pom.xml` raiz)
+   - Spring Profiles a ativar
+   - Docker Compose services necessários
+6. **Executar `postSetup.steps[]`** somente após aprovação explícita do usuário:
+   - Substituição de tokens (ver `TEMPLATE-MANIFEST.json > replaceTokens`)
+   - Remoção de módulos não escolhidos
+   - Validar exclusividade mútua: nunca ativar dois módulos de persistência simultâneos (`postSetup.mutuallyExclusive`)
+7. **Rodar `mvn clean verify`** como validação final obrigatória.
+
+---
+
 ## 🔀 8. Git Workflow
 
 - Sempre criar uma nova branch antes de iniciar qualquer feature, fix, doc ou refactor.

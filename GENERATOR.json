@@ -1,0 +1,276 @@
+{
+  "version": "1.0",
+  "description": "Decision tree for AI-assisted setup of java-hexagonal-template. Read by Claude Code to guide the user through architecture choices and generate a tailored project.",
+  "usage": "When a user wants to start a new project from this template, read AGENTS.md section 9 for the full wizard workflow, then use questions[] and profiles[] below.",
+
+  "questions": [
+    {
+      "id": "persistence",
+      "prompt": "Qual camada de persistência você precisa?",
+      "multiSelect": false,
+      "options": [
+        {
+          "value": "postgres",
+          "label": "PostgreSQL (padrão)",
+          "modules": ["infra-postgres"],
+          "dockerServices": ["postgres"],
+          "springProfiles": []
+        },
+        {
+          "value": "mariadb",
+          "label": "MariaDB",
+          "modules": ["infra-mariadb"],
+          "dockerServices": ["mariadb"],
+          "springProfiles": ["mariadb"],
+          "notes": "Drop-in replacement do infra-postgres. Não use os dois ao mesmo tempo."
+        },
+        {
+          "value": "dynamodb",
+          "label": "AWS DynamoDB",
+          "modules": ["infra-dynamodb"],
+          "dockerServices": ["dynamodb-local"],
+          "springProfiles": ["dynamodb"],
+          "notes": "Requer LocalStack ou credenciais AWS reais. Ativar profile 'dynamodb' na aplicação."
+        },
+        {
+          "value": "none",
+          "label": "Sem persistência relacional / NoSQL",
+          "modules": [],
+          "dockerServices": [],
+          "springProfiles": []
+        }
+      ]
+    },
+    {
+      "id": "cache",
+      "prompt": "Precisa de cache distribuído?",
+      "multiSelect": false,
+      "options": [
+        {
+          "value": "valkey",
+          "label": "Valkey / Redis",
+          "modules": ["infra-valkey"],
+          "dockerServices": ["valkey"],
+          "springProfiles": []
+        },
+        {
+          "value": "none",
+          "label": "Sem cache",
+          "modules": [],
+          "dockerServices": [],
+          "springProfiles": []
+        }
+      ]
+    },
+    {
+      "id": "messaging",
+      "prompt": "Que tipo de mensageria assíncrona você precisa? (múltipla escolha)",
+      "multiSelect": true,
+      "options": [
+        {
+          "value": "kafka",
+          "label": "Apache Kafka (Avro + Confluent Schema Registry)",
+          "modules": ["infra-kafka"],
+          "dockerServices": ["kafka", "schema-registry"],
+          "springProfiles": [],
+          "notes": "Inclui listener (inbound) e publisher (outbound) com serialização Avro."
+        },
+        {
+          "value": "sqs",
+          "label": "AWS SQS",
+          "modules": ["infra-sqs"],
+          "dockerServices": ["localstack"],
+          "springProfiles": ["sqs"],
+          "notes": "Inclui listener (@SqsListener), publisher e NoOp fallback via @ConditionalOnMissingBean."
+        },
+        {
+          "value": "sns",
+          "label": "AWS SNS (fan-out)",
+          "modules": ["infra-sns"],
+          "dockerServices": ["localstack"],
+          "springProfiles": ["sns"],
+          "notes": "Publisher fan-out. Pode ser combinado com SQS (compartilham o mesmo LocalStack)."
+        },
+        {
+          "value": "none",
+          "label": "Sem mensageria assíncrona",
+          "modules": [],
+          "dockerServices": [],
+          "springProfiles": []
+        }
+      ]
+    },
+    {
+      "id": "httpInbound",
+      "prompt": "Precisa expor endpoints REST?",
+      "multiSelect": false,
+      "options": [
+        {
+          "value": "rest",
+          "label": "REST API (Spring Web MVC)",
+          "modules": ["infra-api"],
+          "dockerServices": [],
+          "springProfiles": []
+        },
+        {
+          "value": "none",
+          "label": "Sem endpoints HTTP (mensageria-only / batch)",
+          "modules": [],
+          "dockerServices": [],
+          "springProfiles": []
+        }
+      ]
+    },
+    {
+      "id": "httpOutbound",
+      "prompt": "Precisa integrar com serviços HTTP externos?",
+      "multiSelect": false,
+      "options": [
+        {
+          "value": "feign",
+          "label": "OpenFeign (HTTP client declarativo)",
+          "modules": ["infra-client-api"],
+          "dockerServices": ["wiremock"],
+          "springProfiles": [],
+          "notes": "WireMock é iniciado no docker-compose para simular o serviço externo localmente."
+        },
+        {
+          "value": "none",
+          "label": "Sem integrações HTTP externas",
+          "modules": [],
+          "dockerServices": [],
+          "springProfiles": []
+        }
+      ]
+    }
+  ],
+
+  "profiles": [
+    {
+      "name": "rest-postgres",
+      "label": "REST + PostgreSQL",
+      "description": "CRUD REST API com persistência relacional. Ponto de partida mais comum para serviços web.",
+      "answers": {
+        "persistence": "postgres",
+        "cache": "none",
+        "messaging": ["none"],
+        "httpInbound": "rest",
+        "httpOutbound": "none"
+      },
+      "modules": ["core", "infra-api", "infra-postgres", "application"],
+      "dockerServices": ["postgres"],
+      "springProfiles": []
+    },
+    {
+      "name": "rest-postgres-cache",
+      "label": "REST + PostgreSQL + Cache",
+      "description": "CRUD com cache de leitura via Valkey. Ideal para APIs com alto volume de leitura.",
+      "answers": {
+        "persistence": "postgres",
+        "cache": "valkey",
+        "messaging": ["none"],
+        "httpInbound": "rest",
+        "httpOutbound": "none"
+      },
+      "modules": ["core", "infra-api", "infra-postgres", "infra-valkey", "application"],
+      "dockerServices": ["postgres", "valkey"],
+      "springProfiles": []
+    },
+    {
+      "name": "rest-postgres-feign",
+      "label": "REST + PostgreSQL + HTTP Client",
+      "description": "CRUD com integração para serviços externos via OpenFeign. Arquitetura de orquestração.",
+      "answers": {
+        "persistence": "postgres",
+        "cache": "none",
+        "messaging": ["none"],
+        "httpInbound": "rest",
+        "httpOutbound": "feign"
+      },
+      "modules": ["core", "infra-api", "infra-postgres", "infra-client-api", "application"],
+      "dockerServices": ["postgres", "wiremock"],
+      "springProfiles": []
+    },
+    {
+      "name": "event-driven-kafka",
+      "label": "Event-Driven (Kafka)",
+      "description": "Processamento assíncrono com Kafka. Sem API REST — entrada e saída via eventos Avro.",
+      "answers": {
+        "persistence": "postgres",
+        "cache": "none",
+        "messaging": ["kafka"],
+        "httpInbound": "none",
+        "httpOutbound": "none"
+      },
+      "modules": ["core", "infra-kafka", "infra-postgres", "application"],
+      "dockerServices": ["postgres", "kafka", "schema-registry"],
+      "springProfiles": []
+    },
+    {
+      "name": "rest-kafka-full",
+      "label": "REST + Kafka + PostgreSQL + Cache",
+      "description": "Serviço completo com API REST, persistência, cache e mensageria Kafka. Stack mais comum em microsserviços.",
+      "answers": {
+        "persistence": "postgres",
+        "cache": "valkey",
+        "messaging": ["kafka"],
+        "httpInbound": "rest",
+        "httpOutbound": "none"
+      },
+      "modules": ["core", "infra-api", "infra-postgres", "infra-valkey", "infra-kafka", "application"],
+      "dockerServices": ["postgres", "valkey", "kafka", "schema-registry"],
+      "springProfiles": []
+    },
+    {
+      "name": "aws-native",
+      "label": "AWS Native (SQS + SNS + DynamoDB)",
+      "description": "Stack serverless-friendly com serviços gerenciados AWS. Sem dependências relacionais.",
+      "answers": {
+        "persistence": "dynamodb",
+        "cache": "none",
+        "messaging": ["sqs", "sns"],
+        "httpInbound": "rest",
+        "httpOutbound": "none"
+      },
+      "modules": ["core", "infra-api", "infra-dynamodb", "infra-sqs", "infra-sns", "application"],
+      "dockerServices": ["localstack", "dynamodb-local"],
+      "springProfiles": ["dynamodb", "sqs", "sns"]
+    },
+    {
+      "name": "full-stack",
+      "label": "Full Stack (todos os módulos — referência)",
+      "description": "Inclui todos os 11 módulos. Use como referência de estrutura e remova o que não precisar.",
+      "answers": null,
+      "modules": [
+        "core", "infra-api", "infra-postgres", "infra-mariadb", "infra-valkey",
+        "infra-kafka", "infra-sqs", "infra-sns", "infra-dynamodb", "infra-client-api", "application"
+      ],
+      "dockerServices": ["postgres", "valkey", "kafka", "schema-registry", "localstack", "dynamodb-local", "wiremock"],
+      "springProfiles": [],
+      "notes": "Este é o estado inicial do template. Remova módulos e serviços conforme necessário."
+    }
+  ],
+
+  "postSetup": {
+    "tokenReplacementRef": "TEMPLATE-MANIFEST.json > replaceTokens",
+    "steps": [
+      "Substituir 'com.mycompany.template' pelo pacote base do projeto (groupId + artifactId base)",
+      "Substituir 'java-hexagonal-template' pelo nome do projeto (artifactId raiz, spring.application.name)",
+      "Substituir 'hexagonal_db' pelo nome do banco de dados",
+      "Substituir 'hexagonal-template-group' pelo consumer group-id do Kafka",
+      "Substituir 'user-events-queue' pelo nome da fila SQS",
+      "Substituir 'user-events-topic' pelo nome do tópico SNS",
+      "Substituir 'users' pelo nome da tabela DynamoDB",
+      "Remover diretórios app/<módulo>/ não incluídos na escolha",
+      "Remover entradas <module>app/<módulo></module> do pom.xml raiz",
+      "Remover dependências não usadas de app/application/pom.xml",
+      "Executar: mvn clean verify"
+    ],
+    "mutuallyExclusive": [
+      ["infra-postgres", "infra-mariadb"],
+      ["infra-postgres", "infra-dynamodb"],
+      ["infra-mariadb", "infra-dynamodb"]
+    ],
+    "alwaysInclude": ["core", "application"]
+  }
+}
