@@ -3,6 +3,7 @@ package com.mycompany.template.core.usecase;
 import com.mycompany.template.core.domain.User;
 import com.mycompany.template.core.exception.UserAlreadyExistsException;
 import com.mycompany.template.core.exception.UserNotFoundException;
+import com.mycompany.template.core.ports.in.UpdateUserCommand;
 import com.mycompany.template.core.ports.in.UpdateUserUseCase;
 import com.mycompany.template.core.ports.out.UserCachePort;
 import com.mycompany.template.core.ports.out.UserRepositoryPort;
@@ -22,15 +23,15 @@ public class UpdateUserUseCaseImpl implements UpdateUserUseCase {
     }
 
     @Override
-    public User execute(UUID id, String name, String email) {
+    public User execute(UUID id, UpdateUserCommand command) {
         var existing = userRepositoryPort.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
-        if (!existing.email().equals(email) && userRepositoryPort.existsByEmail(email)) {
-            throw new UserAlreadyExistsException(email);
+        if (!existing.email().equals(command.email()) && userRepositoryPort.existsByEmail(command.email())) {
+            throw new UserAlreadyExistsException(command.email());
         }
 
-        var updated = new User(existing.id(), name, email, existing.createdAt());
+        var updated = new User(existing.id(), command.name(), command.email(), existing.createdAt());
         var saved = userRepositoryPort.save(updated);
         userCachePort.evict(id);
         userCachePort.put(saved);

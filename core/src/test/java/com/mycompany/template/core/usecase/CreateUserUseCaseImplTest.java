@@ -2,6 +2,7 @@ package com.mycompany.template.core.usecase;
 
 import com.mycompany.template.core.domain.User;
 import com.mycompany.template.core.exception.UserAlreadyExistsException;
+import com.mycompany.template.core.ports.in.CreateUserCommand;
 import com.mycompany.template.core.ports.out.UserCachePort;
 import com.mycompany.template.core.ports.out.UserRepositoryPort;
 import org.instancio.Instancio;
@@ -39,7 +40,7 @@ class CreateUserUseCaseImplTest {
             given(userRepositoryPort.existsByEmail(savedUser.email())).willReturn(false);
             given(userRepositoryPort.save(any(User.class))).willReturn(savedUser);
 
-            var result = createUserUseCase.execute(savedUser.name(), savedUser.email());
+            var result = createUserUseCase.execute(new CreateUserCommand(savedUser.name(), savedUser.email()));
 
             assertThat(result).isEqualTo(savedUser);
             then(userRepositoryPort).should().save(any(User.class));
@@ -55,7 +56,7 @@ class CreateUserUseCaseImplTest {
             var existingUser = Instancio.create(User.class);
             given(userRepositoryPort.existsByEmail(existingUser.email())).willReturn(true);
 
-            assertThatThrownBy(() -> createUserUseCase.execute(existingUser.name(), existingUser.email()))
+            assertThatThrownBy(() -> createUserUseCase.execute(new CreateUserCommand(existingUser.name(), existingUser.email())))
                     .isInstanceOf(UserAlreadyExistsException.class)
                     .hasMessageContaining(existingUser.email());
         }

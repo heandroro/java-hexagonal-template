@@ -62,7 +62,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse create(@Valid @RequestBody CreateUserRequest request) {
         return userApiMapper.toResponse(
-                createUserUseCase.execute(request.name(), request.email())
+                createUserUseCase.execute(userApiMapper.toCommand(request))
         );
     }
 
@@ -85,7 +85,7 @@ public class UserController {
     public UserResponse update(@PathVariable UUID id,
                                @Valid @RequestBody UpdateUserRequest request) {
         return userApiMapper.toResponse(
-                updateUserUseCase.execute(id, request.name(), request.email())
+                updateUserUseCase.execute(id, userApiMapper.toCommand(request))
         );
     }
 

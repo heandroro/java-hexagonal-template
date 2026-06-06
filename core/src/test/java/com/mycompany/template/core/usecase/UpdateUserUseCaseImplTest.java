@@ -3,6 +3,7 @@ package com.mycompany.template.core.usecase;
 import com.mycompany.template.core.domain.User;
 import com.mycompany.template.core.exception.UserAlreadyExistsException;
 import com.mycompany.template.core.exception.UserNotFoundException;
+import com.mycompany.template.core.ports.in.UpdateUserCommand;
 import com.mycompany.template.core.ports.out.UserCachePort;
 import com.mycompany.template.core.ports.out.UserRepositoryPort;
 import org.instancio.Instancio;
@@ -44,7 +45,7 @@ class UpdateUserUseCaseImplTest {
             given(userRepositoryPort.findById(existing.id())).willReturn(Optional.of(existing));
             given(userRepositoryPort.save(any(User.class))).willReturn(saved);
 
-            var result = updateUserUseCase.execute(existing.id(), "New Name", existing.email());
+            var result = updateUserUseCase.execute(existing.id(), new UpdateUserCommand("New Name", existing.email()));
 
             assertThat(result).isEqualTo(saved);
             then(userRepositoryPort).should().save(any(User.class));
@@ -60,7 +61,7 @@ class UpdateUserUseCaseImplTest {
             given(userRepositoryPort.existsByEmail("new@example.com")).willReturn(false);
             given(userRepositoryPort.save(any(User.class))).willReturn(saved);
 
-            var result = updateUserUseCase.execute(existing.id(), existing.name(), "new@example.com");
+            var result = updateUserUseCase.execute(existing.id(), new UpdateUserCommand(existing.name(), "new@example.com"));
 
             assertThat(result).isEqualTo(saved);
         }
@@ -71,7 +72,7 @@ class UpdateUserUseCaseImplTest {
             given(userRepositoryPort.findById(existing.id())).willReturn(Optional.of(existing));
             given(userRepositoryPort.existsByEmail("taken@example.com")).willReturn(true);
 
-            assertThatThrownBy(() -> updateUserUseCase.execute(existing.id(), existing.name(), "taken@example.com"))
+            assertThatThrownBy(() -> updateUserUseCase.execute(existing.id(), new UpdateUserCommand(existing.name(), "taken@example.com")))
                     .isInstanceOf(UserAlreadyExistsException.class)
                     .hasMessageContaining("taken@example.com");
         }
@@ -85,7 +86,7 @@ class UpdateUserUseCaseImplTest {
             var id = UUID.randomUUID();
             given(userRepositoryPort.findById(id)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> updateUserUseCase.execute(id, "Name", "email@example.com"))
+            assertThatThrownBy(() -> updateUserUseCase.execute(id, new UpdateUserCommand("Name", "email@example.com")))
                     .isInstanceOf(UserNotFoundException.class)
                     .hasMessageContaining(id.toString());
         }

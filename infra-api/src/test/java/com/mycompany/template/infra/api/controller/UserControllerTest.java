@@ -9,8 +9,10 @@ import com.mycompany.template.core.ports.in.CreateUserUseCase;
 import com.mycompany.template.core.ports.in.DeleteUserUseCase;
 import com.mycompany.template.core.ports.in.FindUserUseCase;
 import com.mycompany.template.core.ports.in.ListUsersUseCase;
+import com.mycompany.template.core.ports.in.CreateUserCommand;
 import com.mycompany.template.core.ports.in.PatchUserCommand;
 import com.mycompany.template.core.ports.in.PatchUserUseCase;
+import com.mycompany.template.core.ports.in.UpdateUserCommand;
 import com.mycompany.template.core.ports.in.UpdateUserUseCase;
 import com.mycompany.template.infra.api.dto.CreateUserRequest;
 import com.mycompany.template.infra.api.dto.PatchUserRequest;
@@ -82,9 +84,11 @@ class UserControllerTest {
         @Test
         void should_return201_when_requestIsValid() throws Exception {
             var request = new CreateUserRequest("John Doe", "john@example.com");
+            var command = new CreateUserCommand(request.name(), request.email());
             var user = Instancio.create(User.class);
             var response = new UserResponse(user.id(), user.name(), user.email(), user.createdAt());
-            given(createUserUseCase.execute(request.name(), request.email())).willReturn(user);
+            given(userApiMapper.toCommand(request)).willReturn(command);
+            given(createUserUseCase.execute(command)).willReturn(user);
             given(userApiMapper.toResponse(user)).willReturn(response);
 
             mockMvc.perform(post("/api/v1/users")
@@ -114,7 +118,9 @@ class UserControllerTest {
         @Test
         void should_return409_when_emailAlreadyExists() throws Exception {
             var request = new CreateUserRequest("John", "dup@example.com");
-            given(createUserUseCase.execute(request.name(), request.email()))
+            var command = new CreateUserCommand(request.name(), request.email());
+            given(userApiMapper.toCommand(request)).willReturn(command);
+            given(createUserUseCase.execute(command))
                     .willThrow(new UserAlreadyExistsException(request.email()));
 
             mockMvc.perform(post("/api/v1/users")
@@ -176,9 +182,11 @@ class UserControllerTest {
         void should_return200_when_updateIsValid() throws Exception {
             var id = UUID.randomUUID();
             var request = new UpdateUserRequest("Jane Doe", "jane@example.com");
+            var command = new UpdateUserCommand(request.name(), request.email());
             var user = Instancio.create(User.class);
             var response = new UserResponse(user.id(), user.name(), user.email(), user.createdAt());
-            given(updateUserUseCase.execute(eq(id), any(), any())).willReturn(user);
+            given(userApiMapper.toCommand(request)).willReturn(command);
+            given(updateUserUseCase.execute(eq(id), eq(command))).willReturn(user);
             given(userApiMapper.toResponse(user)).willReturn(response);
 
             mockMvc.perform(put("/api/v1/users/{id}", id)
@@ -192,7 +200,9 @@ class UserControllerTest {
         void should_return404_when_userNotFound() throws Exception {
             var id = UUID.randomUUID();
             var request = new UpdateUserRequest("Jane", "jane@example.com");
-            given(updateUserUseCase.execute(eq(id), any(), any()))
+            var command = new UpdateUserCommand(request.name(), request.email());
+            given(userApiMapper.toCommand(request)).willReturn(command);
+            given(updateUserUseCase.execute(eq(id), eq(command)))
                     .willThrow(new UserNotFoundException(id));
 
             mockMvc.perform(put("/api/v1/users/{id}", id)
@@ -205,7 +215,9 @@ class UserControllerTest {
         void should_return409_when_emailAlreadyTaken() throws Exception {
             var id = UUID.randomUUID();
             var request = new UpdateUserRequest("Jane", "taken@example.com");
-            given(updateUserUseCase.execute(eq(id), any(), any()))
+            var command = new UpdateUserCommand(request.name(), request.email());
+            given(userApiMapper.toCommand(request)).willReturn(command);
+            given(updateUserUseCase.execute(eq(id), eq(command)))
                     .willThrow(new UserAlreadyExistsException(request.email()));
 
             mockMvc.perform(put("/api/v1/users/{id}", id)
@@ -233,7 +245,7 @@ class UserControllerTest {
             var command = new PatchUserCommand(request.name(), request.email());
             var user = Instancio.create(User.class);
             var response = new UserResponse(user.id(), user.name(), user.email(), user.createdAt());
-            given(userApiMapper.toCommand(any())).willReturn(command);
+            given(userApiMapper.toCommand(any(PatchUserRequest.class))).willReturn(command);
             given(patchUserUseCase.execute(eq(id), eq(command))).willReturn(user);
             given(userApiMapper.toResponse(user)).willReturn(response);
 
@@ -256,7 +268,7 @@ class UserControllerTest {
         void should_return404_when_userNotFound() throws Exception {
             var id = UUID.randomUUID();
             var command = new PatchUserCommand(null, null);
-            given(userApiMapper.toCommand(any())).willReturn(command);
+            given(userApiMapper.toCommand(any(PatchUserRequest.class))).willReturn(command);
             given(patchUserUseCase.execute(eq(id), eq(command)))
                     .willThrow(new UserNotFoundException(id));
 
@@ -271,7 +283,7 @@ class UserControllerTest {
         void should_return409_when_emailAlreadyTaken() throws Exception {
             var id = UUID.randomUUID();
             var command = new PatchUserCommand(null, "taken@example.com");
-            given(userApiMapper.toCommand(any())).willReturn(command);
+            given(userApiMapper.toCommand(any(PatchUserRequest.class))).willReturn(command);
             given(patchUserUseCase.execute(eq(id), eq(command)))
                     .willThrow(new UserAlreadyExistsException("taken@example.com"));
 

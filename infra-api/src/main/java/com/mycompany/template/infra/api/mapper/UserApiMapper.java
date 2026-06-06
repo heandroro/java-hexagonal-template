@@ -1,8 +1,12 @@
 package com.mycompany.template.infra.api.mapper;
 
 import com.mycompany.template.core.domain.User;
+import com.mycompany.template.core.ports.in.CreateUserCommand;
 import com.mycompany.template.core.ports.in.PatchUserCommand;
+import com.mycompany.template.core.ports.in.UpdateUserCommand;
+import com.mycompany.template.infra.api.dto.CreateUserRequest;
 import com.mycompany.template.infra.api.dto.PatchUserRequest;
+import com.mycompany.template.infra.api.dto.UpdateUserRequest;
 import com.mycompany.template.infra.api.dto.UserResponse;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -17,6 +21,10 @@ public interface UserApiMapper {
     UserResponse toResponse(User user);
 
     List<UserResponse> toResponseList(List<User> users);
+
+    CreateUserCommand toCommand(CreateUserRequest request);
+
+    UpdateUserCommand toCommand(UpdateUserRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     PatchUserCommand toCommand(PatchUserRequest request);

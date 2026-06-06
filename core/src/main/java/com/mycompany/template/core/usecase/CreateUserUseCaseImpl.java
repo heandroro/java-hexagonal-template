@@ -2,6 +2,7 @@ package com.mycompany.template.core.usecase;
 
 import com.mycompany.template.core.domain.User;
 import com.mycompany.template.core.exception.UserAlreadyExistsException;
+import com.mycompany.template.core.ports.in.CreateUserCommand;
 import com.mycompany.template.core.ports.in.CreateUserUseCase;
 import com.mycompany.template.core.ports.out.UserCachePort;
 import com.mycompany.template.core.ports.out.UserRepositoryPort;
@@ -22,12 +23,12 @@ public class CreateUserUseCaseImpl implements CreateUserUseCase {
     }
 
     @Override
-    public User execute(String name, String email) {
-        if (userRepositoryPort.existsByEmail(email)) {
-            throw new UserAlreadyExistsException(email);
+    public User execute(CreateUserCommand command) {
+        if (userRepositoryPort.existsByEmail(command.email())) {
+            throw new UserAlreadyExistsException(command.email());
         }
 
-        User user = new User(UUID.randomUUID(), name, email, LocalDateTime.now());
+        User user = new User(UUID.randomUUID(), command.name(), command.email(), LocalDateTime.now());
         User saved = userRepositoryPort.save(user);
         userCachePort.put(saved);
         return saved;

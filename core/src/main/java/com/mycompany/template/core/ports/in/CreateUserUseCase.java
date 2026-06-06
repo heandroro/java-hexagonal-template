@@ -4,5 +4,5 @@ import com.mycompany.template.core.domain.User;
 
 public interface CreateUserUseCase {
 
-    User execute(String name, String email);
+    User execute(CreateUserCommand command);
 }

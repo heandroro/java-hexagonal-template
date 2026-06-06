@@ -6,5 +6,5 @@ import java.util.UUID;
 
 public interface UpdateUserUseCase {
 
-    User execute(UUID id, String name, String email);
+    User execute(UUID id, UpdateUserCommand command);
 }
