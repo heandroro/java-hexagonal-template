@@ -4,6 +4,7 @@ import com.mycompany.template.core.domain.User;
 import com.mycompany.template.core.ports.out.UserCachePort;
 import com.mycompany.template.core.ports.out.UserRepositoryPort;
 import org.instancio.Instancio;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,8 +16,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class FindUserUseCaseImplTest {
@@ -30,36 +31,44 @@ class FindUserUseCaseImplTest {
     @InjectMocks
     private FindUserUseCaseImpl findUserUseCase;
 
-    @Test
-    void execute_shouldReturnUser_whenCacheHit() {
-        var user = Instancio.create(User.class);
-        when(userCachePort.get(user.id())).thenReturn(Optional.of(user));
+    @Nested
+    class WhenCacheHit {
 
-        var result = findUserUseCase.execute(user.id());
+        @Test
+        void should_returnUser_when_cacheHit() {
+            var user = Instancio.create(User.class);
+            given(userCachePort.get(user.id())).willReturn(Optional.of(user));
 
-        assertThat(result).isEqualTo(user);
-        verifyNoInteractions(userRepositoryPort);
+            var result = findUserUseCase.execute(user.id());
+
+            assertThat(result).isEqualTo(user);
+            then(userRepositoryPort).shouldHaveNoInteractions();
+        }
     }
 
-    @Test
-    void execute_shouldFallbackToRepository_whenCacheMiss() {
-        var user = Instancio.create(User.class);
-        when(userCachePort.get(user.id())).thenReturn(Optional.empty());
-        when(userRepositoryPort.findById(user.id())).thenReturn(Optional.of(user));
+    @Nested
+    class WhenCacheMiss {
 
-        var result = findUserUseCase.execute(user.id());
+        @Test
+        void should_fallbackToRepository_when_cacheMiss() {
+            var user = Instancio.create(User.class);
+            given(userCachePort.get(user.id())).willReturn(Optional.empty());
+            given(userRepositoryPort.findById(user.id())).willReturn(Optional.of(user));
 
-        assertThat(result).isEqualTo(user);
-    }
+            var result = findUserUseCase.execute(user.id());
 
-    @Test
-    void execute_shouldThrow_whenNotFoundInCacheOrRepository() {
-        var id = UUID.randomUUID();
-        when(userCachePort.get(id)).thenReturn(Optional.empty());
-        when(userRepositoryPort.findById(id)).thenReturn(Optional.empty());
+            assertThat(result).isEqualTo(user);
+        }
 
-        assertThatThrownBy(() -> findUserUseCase.execute(id))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining(id.toString());
+        @Test
+        void should_throwIllegalArgumentException_when_notFoundInCacheOrRepository() {
+            var id = UUID.randomUUID();
+            given(userCachePort.get(id)).willReturn(Optional.empty());
+            given(userRepositoryPort.findById(id)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> findUserUseCase.execute(id))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining(id.toString());
+        }
     }
 }

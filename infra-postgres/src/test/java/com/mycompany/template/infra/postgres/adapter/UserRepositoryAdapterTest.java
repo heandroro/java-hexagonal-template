@@ -5,6 +5,7 @@ import com.mycompany.template.infra.postgres.entity.UserEntity;
 import com.mycompany.template.infra.postgres.mapper.UserPostgresMapper;
 import com.mycompany.template.infra.postgres.repository.UserJpaRepository;
 import org.instancio.Instancio;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,8 +16,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class UserRepositoryAdapterTest {
@@ -30,46 +31,54 @@ class UserRepositoryAdapterTest {
     @InjectMocks
     private UserRepositoryAdapter userRepositoryAdapter;
 
-    @Test
-    void save_shouldPersistAndReturnMappedDomain() {
-        var user = Instancio.create(User.class);
-        var entity = Instancio.create(UserEntity.class);
+    @Nested
+    class Save {
 
-        when(userPostgresMapper.toEntity(user)).thenReturn(entity);
-        when(userJpaRepository.save(entity)).thenReturn(entity);
-        when(userPostgresMapper.toDomain(entity)).thenReturn(user);
+        @Test
+        void should_persistAndReturnMappedDomain() {
+            var user = Instancio.create(User.class);
+            var entity = Instancio.create(UserEntity.class);
+            given(userPostgresMapper.toEntity(user)).willReturn(entity);
+            given(userJpaRepository.save(entity)).willReturn(entity);
+            given(userPostgresMapper.toDomain(entity)).willReturn(user);
 
-        var result = userRepositoryAdapter.save(user);
+            var result = userRepositoryAdapter.save(user);
 
-        assertThat(result).isEqualTo(user);
-        verify(userJpaRepository).save(entity);
+            assertThat(result).isEqualTo(user);
+            then(userJpaRepository).should().save(entity);
+        }
     }
 
-    @Test
-    void findById_shouldReturnMappedUser_whenEntityExists() {
-        var user = Instancio.create(User.class);
-        var entity = Instancio.create(UserEntity.class);
+    @Nested
+    class FindById {
 
-        when(userJpaRepository.findById(user.id())).thenReturn(Optional.of(entity));
-        when(userPostgresMapper.toDomain(entity)).thenReturn(user);
+        @Test
+        void should_returnMappedUser_when_entityExists() {
+            var user = Instancio.create(User.class);
+            var entity = Instancio.create(UserEntity.class);
+            given(userJpaRepository.findById(user.id())).willReturn(Optional.of(entity));
+            given(userPostgresMapper.toDomain(entity)).willReturn(user);
 
-        var result = userRepositoryAdapter.findById(user.id());
+            assertThat(userRepositoryAdapter.findById(user.id())).contains(user);
+        }
 
-        assertThat(result).contains(user);
+        @Test
+        void should_returnEmpty_when_entityNotFound() {
+            var id = UUID.randomUUID();
+            given(userJpaRepository.findById(id)).willReturn(Optional.empty());
+
+            assertThat(userRepositoryAdapter.findById(id)).isEmpty();
+        }
     }
 
-    @Test
-    void findById_shouldReturnEmpty_whenEntityNotFound() {
-        var id = UUID.randomUUID();
-        when(userJpaRepository.findById(id)).thenReturn(Optional.empty());
+    @Nested
+    class ExistsByEmail {
 
-        assertThat(userRepositoryAdapter.findById(id)).isEmpty();
-    }
+        @Test
+        void should_delegateToRepository() {
+            given(userJpaRepository.existsByEmail("test@example.com")).willReturn(true);
 
-    @Test
-    void existsByEmail_shouldDelegateToRepository() {
-        when(userJpaRepository.existsByEmail("test@example.com")).thenReturn(true);
-
-        assertThat(userRepositoryAdapter.existsByEmail("test@example.com")).isTrue();
+            assertThat(userRepositoryAdapter.existsByEmail("test@example.com")).isTrue();
+        }
     }
 }

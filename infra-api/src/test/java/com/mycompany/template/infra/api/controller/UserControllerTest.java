@@ -8,6 +8,7 @@ import com.mycompany.template.infra.api.dto.CreateUserRequest;
 import com.mycompany.template.infra.api.dto.UserResponse;
 import com.mycompany.template.infra.api.mapper.UserApiMapper;
 import org.instancio.Instancio;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -15,7 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -39,54 +40,62 @@ class UserControllerTest {
     @MockitoBean
     private UserApiMapper userApiMapper;
 
-    @Test
-    void create_shouldReturn201_whenRequestIsValid() throws Exception {
-        var request = new CreateUserRequest("John Doe", "john@example.com");
-        var user = Instancio.create(User.class);
-        var response = new UserResponse(user.id(), user.name(), user.email(), user.createdAt());
+    @Nested
+    class Create {
 
-        when(createUserUseCase.execute(request.name(), request.email())).thenReturn(user);
-        when(userApiMapper.toResponse(user)).thenReturn(response);
+        @Test
+        void should_return201_when_requestIsValid() throws Exception {
+            var request = new CreateUserRequest("John Doe", "john@example.com");
+            var user = Instancio.create(User.class);
+            var response = new UserResponse(user.id(), user.name(), user.email(), user.createdAt());
 
-        mockMvc.perform(post("/api/v1/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(response.id().toString()))
-                .andExpect(jsonPath("$.email").value(response.email()));
+            given(createUserUseCase.execute(request.name(), request.email())).willReturn(user);
+            given(userApiMapper.toResponse(user)).willReturn(response);
+
+            mockMvc.perform(post("/api/v1/users")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.id").value(response.id().toString()))
+                    .andExpect(jsonPath("$.email").value(response.email()));
+        }
+
+        @Test
+        void should_return400_when_emailIsInvalid() throws Exception {
+            var invalidRequest = new CreateUserRequest("John", "not-an-email");
+
+            mockMvc.perform(post("/api/v1/users")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidRequest)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void should_return400_when_nameIsBlank() throws Exception {
+            var invalidRequest = new CreateUserRequest("", "john@example.com");
+
+            mockMvc.perform(post("/api/v1/users")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidRequest)))
+                    .andExpect(status().isBadRequest());
+        }
     }
 
-    @Test
-    void create_shouldReturn400_whenEmailIsInvalid() throws Exception {
-        var invalidRequest = new CreateUserRequest("John", "not-an-email");
+    @Nested
+    class FindById {
 
-        mockMvc.perform(post("/api/v1/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andExpect(status().isBadRequest());
-    }
+        @Test
+        void should_return200_when_userFound() throws Exception {
+            var user = Instancio.create(User.class);
+            var response = new UserResponse(user.id(), user.name(), user.email(), user.createdAt());
 
-    @Test
-    void create_shouldReturn400_whenNameIsBlank() throws Exception {
-        var invalidRequest = new CreateUserRequest("", "john@example.com");
+            given(findUserUseCase.execute(user.id())).willReturn(user);
+            given(userApiMapper.toResponse(user)).willReturn(response);
 
-        mockMvc.perform(post("/api/v1/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void findById_shouldReturn200_whenUserFound() throws Exception {
-        var user = Instancio.create(User.class);
-        var response = new UserResponse(user.id(), user.name(), user.email(), user.createdAt());
-
-        when(findUserUseCase.execute(user.id())).thenReturn(user);
-        when(userApiMapper.toResponse(user)).thenReturn(response);
-
-        mockMvc.perform(get("/api/v1/users/{id}", user.id()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(response.id().toString()))
-                .andExpect(jsonPath("$.email").value(response.email()));
+            mockMvc.perform(get("/api/v1/users/{id}", user.id()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(response.id().toString()))
+                    .andExpect(jsonPath("$.email").value(response.email()));
+        }
     }
 }

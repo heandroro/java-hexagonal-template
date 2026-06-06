@@ -3,6 +3,7 @@ package com.mycompany.template.infra.valkey.adapter;
 import com.mycompany.template.core.domain.User;
 import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -14,8 +15,8 @@ import java.time.Duration;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class UserCacheAdapterTest {
@@ -35,40 +36,52 @@ class UserCacheAdapterTest {
         userCacheAdapter = new UserCacheAdapter(redisTemplate, TTL);
     }
 
-    @Test
-    void put_shouldStoreUserWithConfiguredTtl() {
-        var user = Instancio.create(User.class);
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+    @Nested
+    class Put {
 
-        userCacheAdapter.put(user);
+        @Test
+        void should_storeUserWithConfiguredTtl() {
+            var user = Instancio.create(User.class);
+            given(redisTemplate.opsForValue()).willReturn(valueOperations);
 
-        verify(valueOperations).set("user:" + user.id(), user, TTL);
+            userCacheAdapter.put(user);
+
+            then(valueOperations).should().set("user:" + user.id(), user, TTL);
+        }
     }
 
-    @Test
-    void get_shouldReturnUser_whenKeyExists() {
-        var user = Instancio.create(User.class);
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get("user:" + user.id())).thenReturn(user);
+    @Nested
+    class Get {
 
-        assertThat(userCacheAdapter.get(user.id())).contains(user);
+        @Test
+        void should_returnUser_when_keyExists() {
+            var user = Instancio.create(User.class);
+            given(redisTemplate.opsForValue()).willReturn(valueOperations);
+            given(valueOperations.get("user:" + user.id())).willReturn(user);
+
+            assertThat(userCacheAdapter.get(user.id())).contains(user);
+        }
+
+        @Test
+        void should_returnEmpty_when_keyAbsent() {
+            var id = UUID.randomUUID();
+            given(redisTemplate.opsForValue()).willReturn(valueOperations);
+            given(valueOperations.get("user:" + id)).willReturn(null);
+
+            assertThat(userCacheAdapter.get(id)).isEmpty();
+        }
     }
 
-    @Test
-    void get_shouldReturnEmpty_whenKeyAbsent() {
-        var id = UUID.randomUUID();
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get("user:" + id)).thenReturn(null);
+    @Nested
+    class Evict {
 
-        assertThat(userCacheAdapter.get(id)).isEmpty();
-    }
+        @Test
+        void should_deleteKeyFromRedis() {
+            var id = UUID.randomUUID();
 
-    @Test
-    void evict_shouldDeleteKeyFromRedis() {
-        var id = UUID.randomUUID();
+            userCacheAdapter.evict(id);
 
-        userCacheAdapter.evict(id);
-
-        verify(redisTemplate).delete("user:" + id);
+            then(redisTemplate).should().delete("user:" + id);
+        }
     }
 }

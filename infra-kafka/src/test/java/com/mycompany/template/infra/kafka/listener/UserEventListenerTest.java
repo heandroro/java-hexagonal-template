@@ -9,7 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.Mockito.verify;
+import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class UserEventListenerTest {
@@ -21,11 +21,11 @@ class UserEventListenerTest {
     private UserEventListener userEventListener;
 
     @Test
-    void onUserCreated_shouldDelegateNameAndEmailToUseCase() {
+    void should_delegateNameAndEmailToUseCase_when_userCreatedEventReceived() {
         var payload = Instancio.create(UserEventPayload.class);
 
         userEventListener.onUserCreated(payload);
 
-        verify(createUserUseCase).execute(payload.name(), payload.email());
+        then(createUserUseCase).should().execute(payload.name(), payload.email());
     }
 }
