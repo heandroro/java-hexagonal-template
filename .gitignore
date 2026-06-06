@@ -86,3 +86,6 @@ apm_modules/
 
 # Claude Code
 .claude/
+
+# APM lock
+apm.lock.yaml
