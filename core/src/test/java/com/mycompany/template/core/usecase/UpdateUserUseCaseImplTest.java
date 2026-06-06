@@ -61,7 +61,8 @@ class UpdateUserUseCaseImplTest {
             given(userRepositoryPort.existsByEmail("new@example.com")).willReturn(false);
             given(userRepositoryPort.save(any(User.class))).willReturn(saved);
 
-            var result = updateUserUseCase.execute(existing.id(), new UpdateUserCommand(existing.name(), "new@example.com"));
+            var command = new UpdateUserCommand(existing.name(), "new@example.com");
+            var result = updateUserUseCase.execute(existing.id(), command);
 
             assertThat(result).isEqualTo(saved);
         }
@@ -72,7 +73,8 @@ class UpdateUserUseCaseImplTest {
             given(userRepositoryPort.findById(existing.id())).willReturn(Optional.of(existing));
             given(userRepositoryPort.existsByEmail("taken@example.com")).willReturn(true);
 
-            assertThatThrownBy(() -> updateUserUseCase.execute(existing.id(), new UpdateUserCommand(existing.name(), "taken@example.com")))
+            var command = new UpdateUserCommand(existing.name(), "taken@example.com");
+            assertThatThrownBy(() -> updateUserUseCase.execute(existing.id(), command))
                     .isInstanceOf(UserAlreadyExistsException.class)
                     .hasMessageContaining("taken@example.com");
         }

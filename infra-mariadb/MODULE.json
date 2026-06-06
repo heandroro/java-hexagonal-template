@@ -1,0 +1,13 @@
+{
+  "role": "Relational persistence adapter — Spring Data JPA + MariaDB",
+  "includeWhen": "database = mariadb",
+  "allowedDependencies": ["core", "spring-boot-starter-data-jpa", "mariadb-java-client", "mapstruct", "lombok"],
+  "packages": {
+    "infra.mariadb.adapter":    "Outbound adapters (*Adapter) implementing core *Port",
+    "infra.mariadb.entity":     "JPA @Entity classes",
+    "infra.mariadb.repository": "Spring Data JpaRepository interfaces",
+    "infra.mariadb.mapper":     "MapStruct mappers (Core Domain ↔ JPA Entity)"
+  },
+  "keyClasses": ["UserRepositoryAdapter", "UserEntity", "UserJpaRepository", "UserMariadbMapper"],
+  "note": "Drop-in replacement for infra-postgres — include one or the other in application/pom.xml. Only module that uses Lombok for JPA entity boilerplate."
+}

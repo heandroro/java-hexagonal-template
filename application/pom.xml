@@ -26,6 +26,12 @@
             <groupId>com.mycompany.template</groupId>
             <artifactId>infra-postgres</artifactId>
         </dependency>
+        <!-- Uncomment to use MariaDB instead of PostgreSQL (include only one at a time):
+        <dependency>
+            <groupId>com.mycompany.template</groupId>
+            <artifactId>infra-mariadb</artifactId>
+        </dependency>
+        -->
         <dependency>
             <groupId>com.mycompany.template</groupId>
             <artifactId>infra-valkey</artifactId>
@@ -84,6 +90,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ArchUnit — architecture tests as code -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

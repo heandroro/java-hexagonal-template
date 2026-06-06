@@ -46,4 +46,17 @@ class UserDynamoDbMapperTest {
         var entity = mapper.toEntity(user);
         assertThat(entity.getCreatedAt()).isNull();
     }
+
+    @Test
+    void toDomain_shouldHandleNullCreatedAt() {
+        var entity = new UserDynamoDbEntity();
+        entity.setId(java.util.UUID.randomUUID());
+        entity.setName("John");
+        entity.setEmail("john@example.com");
+        entity.setCreatedAt(null);
+
+        var user = mapper.toDomain(entity);
+
+        assertThat(user.createdAt()).isNull();
+    }
 }

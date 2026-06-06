@@ -7,20 +7,27 @@
     "language": "Java 21",
     "framework": "Spring Boot 3.5.0",
     "build": "Maven (flat multi-module, no root aggregator packaging)",
-    "persistence": "Spring Data JPA (PostgreSQL) | AWS DynamoDB (Spring Cloud AWS 3.3.0)",
+    "persistence": "Spring Data JPA (PostgreSQL | MariaDB) | AWS DynamoDB (Spring Cloud AWS 3.3.0)",
     "cache": "Spring Data Redis — Valkey-compatible",
     "messaging": "Spring Kafka (Avro + Confluent Schema Registry) | AWS SQS | AWS SNS (Spring Cloud AWS 3.3.0)",
     "httpClient": "Spring Cloud OpenFeign",
     "mapping": "MapStruct 1.6.3",
-    "di": "Jakarta Inject (@Named) in core; Spring DI in infra-*"
+    "di": "Jakarta Inject (@Named) in core; Spring DI in infra-*",
+    "testing": "JUnit 5 · Mockito 5 · Instancio 5.3.0 · Testcontainers 1.20.6",
+    "coverage": "JaCoCo 0.8.12 — 90% line + branch threshold per module",
+    "staticAnalysis": "Checkstyle 3.5.0 (verify) · SpotBugs 4.8.x (JDK ≤ 23) · PMD 7.3.x (JDK ≤ 23)",
+    "architectureTests": "ArchUnit 1.3.0 — 19 rules in HexagonalArchitectureTest"
   },
 
   "replaceTokens": [
     { "token": "com.mycompany.template",  "description": "Base Java package and Maven groupId" },
     { "token": "com.mycompany",           "description": "Parent package — replace when namespace has depth > 2" },
     { "token": "java-hexagonal-template", "description": "Root Maven artifactId, project folder name, spring.application.name" },
-    { "token": "hexagonal_db",            "description": "PostgreSQL database name in application.yml" },
-    { "token": "hexagonal-template-group","description": "Kafka consumer group-id in application.yml" }
+    { "token": "hexagonal_db",            "description": "PostgreSQL / MariaDB database name in application.yml and docker-compose.yml" },
+    { "token": "hexagonal-template-group","description": "Kafka consumer group-id in application.yml" },
+    { "token": "user-events-queue",       "description": "SQS queue name — localstack-init entrypoint + app.sqs.queues.user-events in application.yml" },
+    { "token": "user-events-topic",       "description": "SNS topic name — localstack-init entrypoint + app.sns.topics.user-events in application.yml" },
+    { "token": "users",                   "description": "DynamoDB table name — dynamodb-init entrypoint + application.yml" }
   ],
 
   "modules": [
@@ -28,6 +35,7 @@
     { "name": "application",     "always": true,                                           "manifest": "application/MODULE.json" },
     { "name": "infra-api",       "includeWhen": "appType = api",                           "manifest": "infra-api/MODULE.json" },
     { "name": "infra-postgres",  "includeWhen": "database = postgres",                    "manifest": "infra-postgres/MODULE.json" },
+    { "name": "infra-mariadb",   "includeWhen": "database = mariadb",                     "manifest": "infra-mariadb/MODULE.json" },
     { "name": "infra-dynamodb",  "includeWhen": "database = dynamodb",                    "manifest": "infra-dynamodb/MODULE.json" },
     { "name": "infra-valkey",    "includeWhen": "cache = server",                         "manifest": "infra-valkey/MODULE.json" },
     { "name": "infra-kafka",     "includeWhen": "broker = kafka",                          "manifest": "infra-kafka/MODULE.json" },
@@ -74,12 +82,54 @@
     "pom.xml",
     "core/pom.xml",
     "application/src/main/resources/application.yml",
+    "docker-compose.yml",
     "core/src/main/java/com/mycompany/template/core/domain/User.java",
     "core/src/main/java/com/mycompany/template/core/ports/in/CreateUserUseCase.java",
     "core/src/main/java/com/mycompany/template/core/ports/out/UserRepositoryPort.java",
     "core/src/main/java/com/mycompany/template/core/usecase/CreateUserUseCaseImpl.java",
     "infra-postgres/src/main/java/com/mycompany/template/infra/postgres/adapter/UserRepositoryAdapter.java",
     "infra-api/src/main/java/com/mycompany/template/infra/api/controller/UserController.java",
-    "AGENTS.md"
-  ]
+    "AGENTS.md",
+    "config/checkstyle/checkstyle.xml",
+    "config/checkstyle/suppressions.xml",
+    "config/spotbugs/exclude.xml",
+    "config/pmd/ruleset.xml",
+    "application/src/test/java/com/mycompany/template/architecture/HexagonalArchitectureTest.java"
+  ],
+
+  "localDev": {
+    "compose": {
+      "alwaysOn": ["postgres", "valkey", "kafka", "schema-registry"],
+      "profiles": {
+        "mariadb":  { "services": ["mariadb"],                        "replaces": "postgres" },
+        "sqs":      { "services": ["localstack", "localstack-init"],  "replaces": null },
+        "sns":      { "services": ["localstack", "localstack-init"],  "replaces": null },
+        "dynamodb": { "services": ["dynamodb-local", "dynamodb-init"],"replaces": null }
+      },
+      "ports": {
+        "postgres":        5432,
+        "mariadb":         3306,
+        "valkey":          6379,
+        "kafka":           9092,
+        "schema-registry": 8082,
+        "localstack":      4566,
+        "dynamodb-local":  8000
+      },
+      "images": {
+        "postgres":        "postgres:17-alpine",
+        "mariadb":         "mariadb:11-lts",
+        "valkey":          "valkey/valkey:8-alpine",
+        "kafka":           "bitnami/kafka:3.9",
+        "schema-registry": "confluentinc/cp-schema-registry:7.7.0",
+        "localstack":      "localstack/localstack:3",
+        "dynamodb-local":  "amazon/dynamodb-local:2.5.4"
+      },
+      "usage": {
+        "default":  "docker compose up -d",
+        "mariadb":  "docker compose --profile mariadb up -d",
+        "sqs+sns":  "docker compose --profile sqs --profile sns up -d",
+        "dynamodb": "docker compose --profile dynamodb up -d"
+      }
+    }
+  }
 }
