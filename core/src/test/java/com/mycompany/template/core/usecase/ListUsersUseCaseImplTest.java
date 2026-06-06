@@ -67,5 +67,15 @@ class ListUsersUseCaseImplTest {
             assertThat(result.totalElements()).isZero();
             assertThat(result.totalPages()).isZero();
         }
+
+        @Test
+        void should_returnZeroTotalPages_when_sizeIsZero() {
+            given(userRepositoryPort.findAll(0, 0)).willReturn(List.of());
+            given(userRepositoryPort.countAll()).willReturn(0L);
+
+            var result = listUsersUseCase.execute(0, 0);
+
+            assertThat(result.totalPages()).isZero();
+        }
     }
 }

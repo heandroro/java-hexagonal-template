@@ -98,3 +98,5 @@ Se houver violação de qualquer uma dessas diretrizes, pare a geração imediat
 - Antes de cada commit que envolva alteração de código Java, executar obrigatoriamente:
   `mvn clean verify` — compila, testa e empacota; falha se qualquer etapa quebrar.
   Commits de doc/config sem alteração de código podem pular esta etapa.
+- Cobertura mínima obrigatória: **90% de linhas e 90% de branches** por módulo (JaCoCo).
+  Classes excluídas do check: `*MapperImpl`, `*Config`, ports, DTOs, commands, domain, entities, JpaRepositories.

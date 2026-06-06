@@ -40,6 +40,8 @@
         <testcontainers.version>1.20.6</testcontainers.version>
         <spring-cloud-aws.version>3.3.0</spring-cloud-aws.version>
         <instancio.version>5.3.0</instancio.version>
+        <datafaker.version>2.4.2</datafaker.version>
+        <jacoco.version>0.8.12</jacoco.version>
         <confluent.version>7.7.0</confluent.version>
         <avro.version>1.11.4</avro.version>
     </properties>
@@ -97,6 +99,14 @@
                 <groupId>org.instancio</groupId>
                 <artifactId>instancio-junit</artifactId>
                 <version>${instancio.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <!-- DataFaker — realistic fake data for tests -->
+            <dependency>
+                <groupId>net.datafaker</groupId>
+                <artifactId>datafaker</artifactId>
+                <version>${datafaker.version}</version>
                 <scope>test</scope>
             </dependency>
 
@@ -181,6 +191,11 @@
         <pluginManagement>
             <plugins>
                 <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.13.0</version>
@@ -214,5 +229,67 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals><goal>prepare-agent</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals><goal>report</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals><goal>check</goal></goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.90</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.90</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                            <excludes>
+                                <!-- Spring Boot bootstrapper -->
+                                <exclude>**/*Application.class</exclude>
+                                <!-- Infrastructure config beans -->
+                                <exclude>**/*Config.class</exclude>
+                                <!-- Port interfaces — no logic to cover -->
+                                <exclude>**/ports/in/**</exclude>
+                                <exclude>**/ports/out/**</exclude>
+                                <!-- Value objects and DTOs — records with no logic -->
+                                <exclude>**/dto/**</exclude>
+                                <exclude>**/command/**</exclude>
+                                <exclude>**/domain/**</exclude>
+                                <!-- JPA entities and Spring Data repositories -->
+                                <exclude>**/entity/**</exclude>
+                                <exclude>**/*JpaRepository.class</exclude>
+                                <!-- Avro / messaging generated or boilerplate -->
+                                <exclude>**/avro/**</exclude>
+                                <!-- MapStruct generated implementations -->
+                                <exclude>**/*MapperImpl.class</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
 </project>
