@@ -7,50 +7,48 @@
 ## The Hexagon
 
 ```mermaid
-flowchart TD
-    subgraph APP["🚀 application (@SpringBootApplication)"]
+flowchart LR
+    EXT_KAFKA[/"Kafka\nuser.created"/]
+
+    subgraph INBOUND["Inbound Adapters"]
         direction TB
-
-        subgraph INBOUND["Inbound Adapters"]
-            API["infra-api\nUserController\n@RestController"]
-            KAFKA["infra-kafka\nUserEventListener\n@KafkaListener"]
-        end
-
-        subgraph CORE["⬡ CORE — framework-free"]
-            direction TB
-            PIN["ports.in\nCreateUserUseCase\nFindUserUseCase\nFindAllUsersUseCase\nUpdateUserUseCase\nPatchUserUseCase\nDeleteUserUseCase"]
-            CMD["command\nCreateUserCommand\nUpdateUserCommand\nPatchUserCommand"]
-            UC["usecase\n*UseCaseImpl ×6\n@Named"]
-            POUT["ports.out\nUserRepositoryPort\nUserCachePort"]
-            PIN --> UC --> POUT
-            CMD -. "write params" .-> UC
-        end
-
-        subgraph OUTBOUND["Outbound Adapters"]
-            PG["infra-postgres\nUserRepositoryAdapter\n@Repository"]
-            VK["infra-valkey\nUserCacheAdapter\n@Repository"]
-            DY["infra-dynamodb\nUserDynamoDbAdapter\n@Profile('dynamodb')"]
-            FC["infra-client-api\nExternalUserClient\n@FeignClient"]
-        end
+        API["infra-api\nUserController\n@RestController"]
+        KAFKA["infra-kafka\nUserEventListener\n@KafkaListener"]
     end
 
-    EXT_HTTP(["External HTTP Service"])
+    subgraph CORE["⬡ CORE — framework-free"]
+        direction TB
+        PIN["ports.in\n6 UseCases"]
+        CMD["command\n3 Commands"]
+        UC["usecase\n6 UseCaseImpl\n@Named"]
+        POUT["ports.out\nUserRepositoryPort\nUserCachePort"]
+        PIN --> UC --> POUT
+        CMD -. params .-> UC
+    end
+
+    subgraph OUTBOUND["Outbound Adapters"]
+        direction TB
+        PG["infra-postgres\nUserRepositoryAdapter\n@Repository"]
+        VK["infra-valkey\nUserCacheAdapter\n@Repository"]
+        DY["infra-dynamodb\nUserDynamoDbAdapter\n@Profile('dynamodb')"]
+        FC["infra-client-api\nExternalUserClient\n@FeignClient"]
+    end
+
+    EXT_HTTP(["External Service"])
     EXT_DB[("PostgreSQL")]
     EXT_CACHE[("Valkey / Redis")]
     EXT_DYNAMO[("AWS DynamoDB")]
-    EXT_KAFKA[/"Kafka topic: user.created"/]
 
-    API -- "all UseCases" --> PIN
-    KAFKA -- "CreateUserUseCase" --> PIN
-    POUT -- "UserRepositoryPort" --> PG
-    POUT -- "UserCachePort" --> VK
-    POUT -. "UserRepositoryPort\n@Profile(dynamodb)" .-> DY
-    FC -- "HTTP GET /users/{id}" --> EXT_HTTP
-
+    EXT_KAFKA --> KAFKA
+    API --> PIN
+    KAFKA --> PIN
+    POUT --> PG
+    POUT --> VK
+    POUT -.-> DY
+    FC --> EXT_HTTP
     PG --> EXT_DB
     VK --> EXT_CACHE
     DY --> EXT_DYNAMO
-    EXT_KAFKA --> KAFKA
 ```
 
 ---
