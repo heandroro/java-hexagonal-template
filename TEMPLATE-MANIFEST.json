@@ -76,6 +76,6 @@
     "core/src/main/java/com/mycompany/template/core/usecase/CreateUserUseCaseImpl.java",
     "infra-postgres/src/main/java/com/mycompany/template/infra/postgres/adapter/UserRepositoryAdapter.java",
     "infra-api/src/main/java/com/mycompany/template/infra/api/controller/UserController.java",
-    "AGENT.md"
+    "AGENTS.md"
   ]
 }

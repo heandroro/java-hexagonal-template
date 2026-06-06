@@ -1,6 +1,6 @@
 # Architecture Overview
 
-> **Quick-start for AI agents:** Read `TEMPLATE-MANIFEST.json` for the machine-readable scaffold descriptor. Read `AGENT.md` for strict coding rules. This file is the narrative companion.
+> **Quick-start for AI agents:** Read `TEMPLATE-MANIFEST.json` for the machine-readable scaffold descriptor. Read `AGENTS.md` for strict coding rules. This file is the narrative companion.
 
 ---
 
@@ -18,10 +18,11 @@ flowchart TD
 
         subgraph CORE["⬡ CORE — framework-free"]
             direction TB
-            PIN["ports.in\nCreateUserUseCase\nFindUserUseCase"]
-            UC["usecase\nCreateUserUseCaseImpl\nFindUserUseCaseImpl\n@Named"]
+            PIN["ports.in\nCreateUserUseCase\nFindUserUseCase\nFindAllUsersUseCase\nUpdateUserUseCase\nPatchUserUseCase\nDeleteUserUseCase"]
+            CMD["command\nCreateUserCommand\nUpdateUserCommand\nPatchUserCommand"]
+            UC["usecase\n*UseCaseImpl ×6\n@Named"]
             POUT["ports.out\nUserRepositoryPort\nUserCachePort"]
-            PIN --> UC --> POUT
+            PIN --> CMD --> UC --> POUT
         end
 
         subgraph OUTBOUND["Outbound Adapters"]
@@ -38,7 +39,7 @@ flowchart TD
     EXT_DYNAMO[("AWS DynamoDB")]
     EXT_KAFKA[/"Kafka topic: user.created"/]
 
-    API -- "CreateUserUseCase\nFindUserUseCase" --> PIN
+    API -- "all UseCases" --> PIN
     KAFKA -- "CreateUserUseCase" --> PIN
     POUT -- "UserRepositoryPort" --> PG
     POUT -- "UserCachePort" --> VK
@@ -57,7 +58,7 @@ flowchart TD
 
 | Module | Technology | Role |
 |---|---|---|
-| `core` | Java 21 std + jakarta.inject | Business rules, domain model, port contracts |
+| `core` | Java 21 std + jakarta.inject | Business rules, domain model, command objects, port contracts |
 | `infra-api` | Spring Web MVC + MapStruct | REST inbound adapter (Controllers + DTOs) |
 | `infra-postgres` | Spring Data JPA + Hibernate + Lombok | Relational persistence outbound adapter |
 | `infra-valkey` | Spring Data Redis | Cache outbound adapter (Valkey-compatible) |
@@ -75,13 +76,14 @@ HTTP Request
     │
     ▼
 UserController.create(@RequestBody CreateUserRequest)   [infra-api]
-    │  uses UserApiMapper.toResponse()
+    │  UserApiMapper.toCommand(request) → CreateUserCommand
     │
     ▼
-CreateUserUseCase.execute(name, email)                  [core — port contract]
+CreateUserUseCase.execute(CreateUserCommand)            [core — port contract]
     │
     ▼
-CreateUserUseCaseImpl.execute(name, email)              [core — @Named impl]
+CreateUserUseCaseImpl.execute(CreateUserCommand)        [core — @Named impl]
+    │  command.name(), command.email()
     │  checks UserRepositoryPort.existsByEmail()
     │  calls   UserRepositoryPort.save(User)
     │  calls   UserCachePort.put(User)
@@ -106,13 +108,44 @@ FindUserUseCaseImpl.execute(id)
     └──▶ UserCachePort.get(id)  → MISS → UserRepositoryPort.findById(id) → return User
 ```
 
+### `PUT /api/v1/users/{id}` — full replace
+
+```
+UserController.update(@PathVariable id, @RequestBody UpdateUserRequest)   [infra-api]
+    │  UserApiMapper.toCommand(request) → UpdateUserCommand
+    │
+    ▼
+UpdateUserUseCase.execute(id, UpdateUserCommand)        [core]
+    │  UserRepositoryPort.findById(id) → existing User
+    │  UserRepositoryPort.save(updated User)
+    │
+    ▼
+UserController returns UserResponse (200 OK)
+```
+
+### `PATCH /api/v1/users/{id}` — partial update
+
+```
+UserController.patch(@PathVariable id, @RequestBody PatchUserRequest)     [infra-api]
+    │  UserApiMapper.toCommand(request) → PatchUserCommand   [null fields ignored via @BeanMapping]
+    │
+    ▼
+PatchUserUseCase.execute(id, PatchUserCommand)          [core]
+    │  UserRepositoryPort.findById(id) → existing User
+    │  null-coalesce: command.name() != null ? command.name() : existing.name()
+    │  UserRepositoryPort.save(merged User)
+    │
+    ▼
+UserController returns UserResponse (200 OK)
+```
+
 ### Kafka: `user.created` topic
 
 ```
 UserEventListener.onUserCreated(UserEventPayload)       [infra-kafka — @KafkaListener]
     │
     ▼
-CreateUserUseCase.execute(payload.name(), payload.email())
+CreateUserUseCase.execute(CreateUserCommand)
 ```
 
 ---
@@ -123,6 +156,7 @@ CreateUserUseCase.execute(payload.name(), payload.email())
 |---|---|---|---|
 | `UseCase` | `core.ports.in` | `interface` | — |
 | `UseCaseImpl` | `core.usecase` | `class` | `@Named` (jakarta) |
+| `Command` | `core.command` | `record` | — |
 | `Port` | `core.ports.out` | `interface` | — |
 | `Adapter` | `infra-*` outbound | `class` | `@Repository` / `@Component` |
 | `Controller` | `infra-api` | `class` | `@RestController` |
@@ -142,6 +176,7 @@ CreateUserUseCase.execute(payload.name(), payload.email())
 6. **No interfaces on inbound adapters** — `UserController` and `UserEventListener` are concrete classes only.
 7. **DynamoDB profile isolation** — `UserDynamoDbAdapter` is `@Profile("dynamodb")`; activating it alongside the Postgres adapter causes a duplicate `UserRepositoryPort` bean.
 8. **Lombok scoped to `infra-postgres` only** — JPA entities need mutable boilerplate; all other layers use records or plain classes.
+9. **Command objects in `core.command`** — write use cases receive `*Command` records instead of loose parameters. MapStruct in `infra-api` converts Request DTOs → Commands; PATCH uses `@BeanMapping(nullValuePropertyMappingStrategy = IGNORE)` to skip null fields.
 
 ---
 
@@ -150,19 +185,31 @@ CreateUserUseCase.execute(payload.name(), payload.email())
 Follow this exact order — do not skip steps or create files out of sequence:
 
 ```
-[ ] 1. core / domain        — add pure domain record/class (zero annotations)
-[ ] 2. core / ports.out     — add *Port interface(s) the use case needs
-[ ] 3. core / ports.in      — add *UseCase interface
-[ ] 4. core / usecase       — add *UseCaseImpl (@Named, clean constructor)
-[ ] 5. infra-postgres       — add *Entity, extend JpaRepository, add *Mapper, add *Adapter
-[ ] 6. infra-valkey         — add *Adapter if caching is needed
-[ ] 7. infra-dynamodb       — add *DynamoDbEntity (mutable, no Lombok), *Mapper, *Adapter (@Profile)
-[ ] 8. infra-kafka          — add payload record, *Mapper, *Listener if event-driven
-[ ] 9. infra-client-api     — add @FeignClient if external HTTP call needed
-[  ] 10. infra-api          — add Request/Response records, *Mapper, *Controller
+[ ] 1.  core / domain        — add pure domain record/class (zero annotations)
+[ ] 2.  core / command       — add *Command record(s) for write operations
+[ ] 3.  core / ports.out     — add *Port interface(s) the use case needs
+[ ] 4.  core / ports.in      — add *UseCase interface (receives *Command for writes)
+[ ] 5.  core / usecase       — add *UseCaseImpl (@Named, clean constructor)
+[ ] 6.  infra-postgres       — add *Entity, extend JpaRepository, add *Mapper, add *Adapter
+[ ] 7.  infra-valkey         — add *Adapter if caching is needed
+[ ] 8.  infra-dynamodb       — add *DynamoDbEntity (mutable, no Lombok), *Mapper, *Adapter (@Profile)
+[ ] 9.  infra-kafka          — add payload record, *Mapper, *Listener if event-driven
+[ ] 10. infra-client-api     — add @FeignClient if external HTTP call needed
+[ ] 11. infra-api            — add Request/Response records, *Mapper, *Controller
 ```
 
 > **Violation check:** if any infra class imports from `core.domain` without going through a port, or if `core` imports `org.springframework.*`, stop and flag the inconsistency.
+
+---
+
+## LLM Indexing
+
+| File | Purpose |
+|---|---|
+| `TEMPLATE-MANIFEST.json` | Root index: stack, replace tokens, naming/mapper/interface rules, module list |
+| `{module}/MODULE.json` | Per-module detail: role, packages, keyClasses, config |
+| `AGENTS.md` | Prescriptive rules — what to do and what to avoid |
+| `ARCHITECTURE.md` | Narrative companion — why the architecture is shaped this way |
 
 ---
 

@@ -1,4 +1,4 @@
-# AGENT.md - Contexto de IA e Regras de Desenvolvimento
+# AGENTS.md - Contexto de IA e Regras de Desenvolvimento
 
 Você é um Engenheiro de Software Especialista que atua como copiloto de desenvolvimento neste projeto. Seu objetivo é garantir a consistência absoluta da arquitetura, padrões de código e convenções de nomenclatura estabelecidas.
 

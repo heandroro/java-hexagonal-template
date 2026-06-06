@@ -24,18 +24,23 @@ java-hexagonal-template/
 ├── infra-kafka/             # Async messaging adapter (Spring Kafka)
 ├── infra-postgres/          # Relational persistence adapter (Spring Data JPA)
 ├── infra-valkey/            # Cache adapter (Spring Data Redis / Valkey)
+├── infra-dynamodb/          # NoSQL persistence adapter (AWS DynamoDB) — @Profile("dynamodb")
 ├── infra-client-api/        # Outbound HTTP adapter (OpenFeign)
 └── application/             # Spring Boot bootstrapper + configuration
 ```
 
 ## Reference Domain: `User`
 
-The template ships with a full `User` feature to demonstrate all architectural boundaries:
+The template ships with a full `User` CRUD feature to demonstrate all architectural boundaries:
 
 ```
-POST /api/v1/users          → CreateUserUseCase → UserRepositoryAdapter (Postgres) + UserCacheAdapter (Valkey)
-GET  /api/v1/users/{id}     → FindUserUseCase   → UserCacheAdapter (hit) or UserRepositoryAdapter (miss)
-Kafka topic: user.created   → UserEventListener → CreateUserUseCase
+POST   /api/v1/users         → CreateUserUseCase   → UserRepositoryAdapter (Postgres) + UserCacheAdapter (Valkey)
+GET    /api/v1/users         → FindAllUsersUseCase → UserRepositoryAdapter (paginated)
+GET    /api/v1/users/{id}    → FindUserUseCase     → UserCacheAdapter (hit) or UserRepositoryAdapter (miss)
+PUT    /api/v1/users/{id}    → UpdateUserUseCase   → UserRepositoryAdapter
+PATCH  /api/v1/users/{id}    → PatchUserUseCase    → UserRepositoryAdapter
+DELETE /api/v1/users/{id}    → DeleteUserUseCase   → UserRepositoryAdapter + UserCacheAdapter (evict)
+Kafka: user.created          → UserEventListener  → CreateUserUseCase
 ```
 
 ## Running Locally
@@ -53,4 +58,4 @@ java -jar application/target/application-1.0.0-SNAPSHOT.jar
 
 ## Architecture Rules
 
-See [AGENT.md](AGENT.md) for the full set of architectural constraints enforced by the AI copilot.
+See [AGENTS.md](AGENTS.md) for the full set of architectural constraints enforced by the AI copilot.
