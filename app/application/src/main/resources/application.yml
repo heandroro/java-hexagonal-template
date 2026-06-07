@@ -97,7 +97,7 @@ springwolf:
     servers:
       ws-stomp:
         protocol: stomp
-        url: ws://localhost:8080/ws
+        host: ws://localhost:8080/ws
   plugin:
     stomp:
       scanner:
