@@ -97,16 +97,16 @@ Ferramentas configuradas em `pluginManagement` do `pom.xml` raiz:
 | Ferramenta | Execução | Regras |
 | :--- | :--- | :--- |
 | **Checkstyle** | Automática (`verify`) | `config/checkstyle/checkstyle.xml` — imports, braces, line length ≤ 120 |
-| **SpotBugs** | Manual (`mvn spotbugs:check`) | `config/spotbugs/exclude.xml` — threshold High, exclui entities e Avro |
-| **PMD** | Manual (`mvn pmd:check`) | `config/pmd/ruleset.xml` — complexity ≤ 15, empty catch, unused vars |
+| **SpotBugs** | Automática (`verify`) | `config/spotbugs/exclude.xml` — threshold High, exclui entities e Avro |
+| **PMD** | Automática (`verify`) | `config/pmd/ruleset.xml` — complexity ≤ 15, empty catch, unused vars |
 
-> **Compat JDK**: SpotBugs 4.8.x e PMD 7.3.x não suportam class-file version 69 (JDK 25) para resolução de tipos.
-> Rode-os manualmente no CI com JDK ≤ 23. Quando esses projetos adicionarem suporte ao JDK 25, reabilitar as execuções em `<build><plugins>` do `pom.xml` raiz.
+> **Compat JDK**: SpotBugs 4.9.x (ASM 9.8) e PMD 7.17.0 suportam class-file até versão **69 (JDK 25)**.
+> Ambas as ferramentas executam automaticamente no `verify`.
 
 Configs de supressão:
 - Checkstyle suprime: `target/`, `*MapperImpl.java`, `avro/`
 - SpotBugs exclui: classes `*.entity.*`, `*MapperImpl`, `*Application`, `*.avro.*`
-- PMD exclui: `**/*MapperImpl.java` (código gerado pelo MapStruct)
+- PMD exclui: `**/*MapperImpl.java` (gerado pelo MapStruct) e `**/avro/**/*.java` (gerado pelo avro-maven-plugin)
 
 ---
 

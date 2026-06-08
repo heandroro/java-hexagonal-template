@@ -236,6 +236,7 @@ Follow this exact order — do not skip steps or create files out of sequence:
 | `app/{module}/MODULE.json` | Per-module detail: role, packages, keyClasses, config |
 | `AGENTS.md` | Prescriptive rules — what to do and what to avoid |
 | `ARCHITECTURE.md` | Narrative companion — why the architecture is shaped this way |
+| `DEPENDENCY-CATALOG.md` | Versioned index of all libraries, frameworks, and Maven plugins |
 
 ---
 
@@ -262,8 +263,8 @@ Follow this exact order — do not skip steps or create files out of sequence:
 | JaCoCo | `verify` | ≥ 90% line + branch coverage per module |
 | Checkstyle | `verify` | style — imports, braces, line length ≤ 120 |
 | ArchUnit | `verify` | 19 hexagonal rules as JUnit tests |
-| SpotBugs | manual (`mvn spotbugs:check`, JDK ≤ 23) | bugs and vulnerabilities |
-| PMD | manual (`mvn pmd:check`, JDK ≤ 23) | complexity and code smells |
+| SpotBugs | `verify` | bugs and vulnerabilities |
+| PMD | `verify` | complexity and code smells |
 
 Configuration lives in `config/checkstyle/`, `config/spotbugs/`, `config/pmd/`.
 See `AGENTS.md` section 7 for details and JDK compatibility notes.
