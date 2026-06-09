@@ -26,6 +26,11 @@
         <Class name="~.*\.avro\..*"/>
     </Match>
 
+    <!-- Protocol Buffer generated classes -->
+    <Match>
+        <Class name="~.*\.proto\..*"/>
+    </Match>
+
     <!-- Serialization-related false positives on records and DTOs -->
     <Match>
         <Bug pattern="SE_NO_SERIALVERSIONID,SE_BAD_FIELD"/>

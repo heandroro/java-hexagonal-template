@@ -1,0 +1,22 @@
+{
+  "role": "Inbound WebSocket adapter — STOMP + Springwolf AsyncAPI documentation",
+  "includeWhen": "httpInbound includes websocket",
+  "packages": {
+    "infra.api.websocket.controller": "STOMP message handlers (*WebSocketController) — no interface",
+    "infra.api.websocket.dto":        "WebSocket event records (*Event)",
+    "infra.api.websocket.config":     "STOMP broker configuration (WebSocketConfig)",
+    "infra.api.websocket.mapper":     "MapStruct mappers — Domain → WebSocket Event"
+  },
+  "dependencies": [
+    "spring-boot-starter-websocket",
+    "springwolf-stomp",
+    "springwolf-ui",
+    "mapstruct"
+  ],
+  "keyClasses": [
+    "UserWebSocketController",
+    "UserWebSocketEvent",
+    "WebSocketConfig",
+    "UserWebSocketMapper"
+  ]
+}

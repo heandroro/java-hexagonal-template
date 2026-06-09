@@ -13,7 +13,9 @@ flowchart LR
 
     subgraph INBOUND["Inbound Adapters"]
         direction TB
-        API["infra-api\nUserController\n@RestController"]
+        API_REST["infra-api-rest\nUserController\n@RestController"]
+        API_WS["infra-api-websocket\nUserWebSocketController\n@MessageMapping"]
+        API_GRPC["infra-api-grpc\nUserGrpcService\n@GrpcService"]
         KAFKA["infra-kafka\nUserEventListener\n@KafkaListener"]
         SQS_L["infra-sqs\nUserSqsListener\n@SqsListener"]
     end
@@ -49,7 +51,9 @@ flowchart LR
 
     EXT_KAFKA --> KAFKA
     EXT_SQS_IN --> SQS_L
-    API --> PIN
+    API_REST --> PIN
+    API_WS --> PIN
+    API_GRPC --> PIN
     KAFKA --> PIN
     SQS_L --> PIN
     POUT --> PG
@@ -74,7 +78,9 @@ flowchart LR
 | Module | Technology | Role |
 | --- | --- | --- |
 | `core` | Java 21 std + jakarta.inject | Business rules, domain model, command objects, port contracts |
-| `infra-api` | Spring Web MVC + MapStruct | REST inbound adapter (Controllers + DTOs) |
+| `infra-api-rest` | Spring Web MVC + springdoc 2.8.4 + MapStruct | REST inbound adapter (Controllers + DTOs) |
+| `infra-api-websocket` | Spring WebSocket + Springwolf 1.13.0 | STOMP WebSocket inbound adapter |
+| `infra-api-grpc` | net.devh gRPC 3.1.0.RELEASE + Protobuf 3.25.5 + MapStruct | gRPC inbound adapter (Protocol Buffers) |
 | `infra-postgres` | Spring Data JPA + Hibernate + Lombok | Relational persistence outbound adapter (PostgreSQL) |
 | `infra-mariadb` | Spring Data JPA + Hibernate + Lombok | Relational persistence outbound adapter — drop-in for MariaDB (`@Profile("mariadb")`) |
 | `infra-valkey` | Spring Data Redis | Cache outbound adapter (Valkey-compatible) |
@@ -93,7 +99,7 @@ flowchart LR
 HTTP Request
     │
     ▼
-UserController.create(@RequestBody CreateUserRequest)   [infra-api]
+UserController.create(@RequestBody CreateUserRequest)   [infra-api-rest]
     │  UserApiMapper.toCommand(request) → CreateUserCommand
     │
     ▼
@@ -129,7 +135,7 @@ FindUserUseCaseImpl.execute(id)
 ### `PUT /api/v1/users/{id}` — full replace
 
 ```text
-UserController.update(@PathVariable id, @RequestBody UpdateUserRequest)   [infra-api]
+UserController.update(@PathVariable id, @RequestBody UpdateUserRequest)   [infra-api-rest]
     │  UserApiMapper.toCommand(request) → UpdateUserCommand
     │
     ▼
@@ -144,7 +150,7 @@ UserController returns UserResponse (200 OK)
 ### `PATCH /api/v1/users/{id}` — partial update
 
 ```text
-UserController.patch(@PathVariable id, @RequestBody PatchUserRequest)     [infra-api]
+UserController.patch(@PathVariable id, @RequestBody PatchUserRequest)     [infra-api-rest]
     │  UserApiMapper.toCommand(request) → PatchUserCommand   [null fields ignored via @BeanMapping]
     │
     ▼
@@ -177,7 +183,8 @@ CreateUserUseCase.execute(CreateUserCommand)
 | `Command` | `core.command` | `record` | — |
 | `Port` | `core.ports.out` | `interface` | — |
 | `Adapter` | `infra-*` outbound | `class` | `@Repository` / `@Component` |
-| `Controller` | `infra-api` | `class` | `@RestController` |
+| `Controller` | `infra-api-rest` | `class` | `@RestController` |
+| `GrpcService` | `infra-api-grpc` | `class` | `@GrpcService` (net.devh) |
 | `Listener` | `infra-kafka` | `class` | `@Component` |
 | `Mapper` | `infra-*` mapper pkg | `interface` | `@Mapper(componentModel = SPRING)` |
 | `Entity` | `infra-postgres` | `class` | `@Entity` |
@@ -194,7 +201,7 @@ CreateUserUseCase.execute(CreateUserCommand)
 6. **No interfaces on inbound adapters** — `UserController` and `UserEventListener` are concrete classes only.
 7. **DynamoDB profile isolation** — `UserDynamoDbAdapter` is `@Profile("dynamodb")`; activating it alongside the Postgres adapter causes a duplicate `UserRepositoryPort` bean.
 8. **Lombok scoped to JPA modules only** — `infra-postgres` and `infra-mariadb` use Lombok for entity boilerplate; all other layers use records or plain classes.
-9. **Command objects in `core.command`** — write use cases receive `*Command` records instead of loose parameters. MapStruct in `infra-api` converts Request DTOs → Commands; PATCH uses `@BeanMapping(nullValuePropertyMappingStrategy = IGNORE)` to skip null fields.
+9. **Command objects in `core.command`** — write use cases receive `*Command` records instead of loose parameters. `infra-api-rest`: MapStruct converts Request DTOs → Commands; REST PATCH uses `@BeanMapping(nullValuePropertyMappingStrategy = IGNORE)` to skip null Java fields. `infra-api-grpc`: MapStruct uses source presence checkers (`hasXxx()`) to detect absent proto3 optional fields automatically — no manual `default` methods needed.
 10. **Profile isolation for alternative adapters** — `infra-mariadb` is `@Profile("mariadb")` as a drop-in for `infra-postgres` (activate one or the other); `infra-sqs` and `infra-sns` use `@Profile("sqs")`/`@Profile("sns")` with `NoOp*` fallbacks via `@ConditionalOnMissingBean` so the app boots without the broker.
 
 > All 10 rules above are automatically enforced by `HexagonalArchitectureTest`
@@ -220,7 +227,10 @@ Follow this exact order — do not skip steps or create files out of sequence:
 [ ] 9.  messaging            — choose broker: infra-kafka (*Listener), infra-sqs (*Listener + *Publisher + NoOp*Publisher),
                                or infra-sns (*Publisher + NoOp*Publisher) — add payload/notification record, *Mapper
 [ ] 10. infra-client-api     — add @FeignClient if external HTTP call needed
-[ ] 11. infra-api            — add Request/Response records, *Mapper, *Controller
+[ ] 11. infra-api-rest / infra-api-websocket / infra-api-grpc — choose the inbound protocol:
+            REST: add Request/Response records, *Mapper, *Controller (@RestController)
+            WebSocket: add Event DTO, *Controller (@MessageMapping)
+            gRPC: add .proto definition, *Mapper, *GrpcService (@GrpcService)
 ```
 
 > **Violation check:** if any infra class imports from `core.domain` without going through a port, or if `core` imports `org.springframework.*`, stop and flag the inconsistency.
