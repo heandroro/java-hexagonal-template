@@ -1,0 +1,25 @@
+{
+  "role": "Inbound REST adapter — Spring Web MVC + OpenAPI/Swagger",
+  "includeWhen": "httpInbound includes rest",
+  "packages": {
+    "infra.api.rest.controller": "Concrete REST controllers (*Controller) — no interface",
+    "infra.api.rest.dto":        "Request/Response records",
+    "infra.api.rest.handler":    "@RestControllerAdvice — RFC 9457 ProblemDetail error mapping",
+    "infra.api.rest.config":     "OpenAPI/Swagger configuration (springdoc)",
+    "infra.api.rest.mapper":     "MapStruct mappers — Request DTO → Command / Domain → Response DTO"
+  },
+  "dependencies": [
+    "spring-boot-starter-web",
+    "spring-boot-starter-validation",
+    "spring-data-commons",
+    "springdoc-openapi-starter-webmvc-ui",
+    "mapstruct"
+  ],
+  "keyClasses": [
+    "UserController",
+    "CreateUserRequest", "UpdateUserRequest", "PatchUserRequest", "UserResponse",
+    "ApiExceptionHandler",
+    "OpenApiConfig",
+    "UserApiMapper"
+  ]
+}

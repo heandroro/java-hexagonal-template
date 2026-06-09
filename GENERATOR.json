@@ -102,15 +102,31 @@
     },
     {
       "id": "httpInbound",
-      "prompt": "Precisa expor endpoints REST?",
-      "multiSelect": false,
+      "prompt": "Quais protocolos de entrada HTTP você precisa? (múltipla escolha)",
+      "multiSelect": true,
       "options": [
         {
           "value": "rest",
-          "label": "REST API (Spring Web MVC)",
-          "modules": ["infra-api"],
+          "label": "REST API (Spring Web MVC + Swagger/OpenAPI)",
+          "modules": ["infra-api-rest"],
           "dockerServices": [],
           "springProfiles": []
+        },
+        {
+          "value": "websocket",
+          "label": "WebSocket/STOMP (AsyncAPI via Springwolf)",
+          "modules": ["infra-api-websocket"],
+          "dockerServices": [],
+          "springProfiles": [],
+          "notes": "STOMP sobre WebSocket com SockJS fallback. Documentação AsyncAPI gerada automaticamente pelo Springwolf."
+        },
+        {
+          "value": "grpc",
+          "label": "gRPC (Protocol Buffers — porta 9090)",
+          "modules": ["infra-api-grpc"],
+          "dockerServices": [],
+          "springProfiles": [],
+          "notes": "Servidor gRPC via HTTP/2 + Protocol Buffers. Porta padrão: 9090 (configurável via GRPC_PORT)."
         },
         {
           "value": "none",
@@ -157,7 +173,7 @@
         "httpInbound": "rest",
         "httpOutbound": "none"
       },
-      "modules": ["core", "infra-api", "infra-postgres", "application"],
+      "modules": ["core", "infra-api-rest", "infra-postgres", "application"],
       "dockerServices": ["postgres"],
       "springProfiles": []
     },
@@ -172,7 +188,7 @@
         "httpInbound": "rest",
         "httpOutbound": "none"
       },
-      "modules": ["core", "infra-api", "infra-postgres", "infra-valkey", "application"],
+      "modules": ["core", "infra-api-rest", "infra-postgres", "infra-valkey", "application"],
       "dockerServices": ["postgres", "valkey"],
       "springProfiles": []
     },
@@ -187,7 +203,7 @@
         "httpInbound": "rest",
         "httpOutbound": "feign"
       },
-      "modules": ["core", "infra-api", "infra-postgres", "infra-client-api", "application"],
+      "modules": ["core", "infra-api-rest", "infra-postgres", "infra-client-api", "application"],
       "dockerServices": ["postgres", "wiremock"],
       "springProfiles": []
     },
@@ -217,7 +233,7 @@
         "httpInbound": "rest",
         "httpOutbound": "none"
       },
-      "modules": ["core", "infra-api", "infra-postgres", "infra-valkey", "infra-kafka", "application"],
+      "modules": ["core", "infra-api-rest", "infra-postgres", "infra-valkey", "infra-kafka", "application"],
       "dockerServices": ["postgres", "valkey", "kafka", "schema-registry"],
       "springProfiles": []
     },
@@ -232,7 +248,7 @@
         "httpInbound": "rest",
         "httpOutbound": "none"
       },
-      "modules": ["core", "infra-api", "infra-dynamodb", "infra-sqs", "infra-sns", "application"],
+      "modules": ["core", "infra-api-rest", "infra-dynamodb", "infra-sqs", "infra-sns", "application"],
       "dockerServices": ["localstack", "dynamodb-local"],
       "springProfiles": ["dynamodb", "sqs", "sns"]
     },
@@ -242,7 +258,7 @@
       "description": "Inclui todos os 11 módulos. Use como referência de estrutura e remova o que não precisar.",
       "answers": null,
       "modules": [
-        "core", "infra-api", "infra-postgres", "infra-mariadb", "infra-valkey",
+        "core", "infra-api-rest", "infra-api-websocket", "infra-postgres", "infra-mariadb", "infra-valkey",
         "infra-kafka", "infra-sqs", "infra-sns", "infra-dynamodb", "infra-client-api", "application"
       ],
       "dockerServices": ["postgres", "valkey", "kafka", "schema-registry", "localstack", "dynamodb-local", "wiremock"],

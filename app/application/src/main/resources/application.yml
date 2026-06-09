@@ -86,6 +86,10 @@ management:
 server:
   port: 8080
 
+grpc:
+  server:
+    port: ${GRPC_PORT:9090}
+
 springwolf:
   enabled: true
   docket:
