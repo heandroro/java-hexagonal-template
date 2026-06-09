@@ -52,7 +52,8 @@
     { "suffix": "Command",     "layer": "core.command",     "type": "record",    "example": "CreateUserCommand" },
     { "suffix": "Port",        "layer": "core.ports.out",   "type": "interface", "example": "UserRepositoryPort" },
     { "suffix": "Adapter",     "layer": "infra-* outbound", "type": "class",     "example": "UserRepositoryAdapter", "annotations": ["@Repository or @Component"] },
-    { "suffix": "Controller",  "layer": "infra-api",        "type": "class",     "example": "UserController",        "annotations": ["@RestController"] },
+    { "suffix": "Controller",  "layer": "infra-api-rest",   "type": "class",     "example": "UserController",        "annotations": ["@RestController"] },
+    { "suffix": "GrpcService", "layer": "infra-api-grpc",   "type": "class",     "example": "UserGrpcService",       "annotations": ["@GrpcService"] },
     { "suffix": "Listener",    "layer": "infra-kafka",      "type": "class",     "example": "UserEventListener",     "annotations": ["@Component", "@KafkaListener"] },
     { "suffix": "Mapper",      "layer": "infra-* mapper",   "type": "interface", "example": "UserApiMapper",         "annotations": ["@Mapper(componentModel = SPRING)"] },
     { "suffix": "Entity",      "layer": "infra-postgres",   "type": "class",     "example": "UserEntity",            "annotations": ["@Entity"] }
@@ -65,7 +66,7 @@
     "ownership": {
       "infra-api-rest":      "Request DTO → Command (core.command) / Domain → Response DTO",
       "infra-api-websocket": "Domain → WebSocket Event DTO",
-      "infra-api-grpc":      "Proto messages ↔ Core Domain / Command (@Mapper ADDER_PREFERRED — toPatchCommand é default method por semântica proto3 optional)",
+      "infra-api-grpc":      "Proto messages ↔ Core Domain / Command (@Mapper ADDER_PREFERRED + unmappedTargetPolicy=IGNORE; source presence checkers detectam hasXxx() de campos proto3 optional automaticamente)",
       "infra-postgres": "Core Domain ↔ JPA Entity",
       "infra-kafka":    "UserEvent (Avro) ↔ Core Domain / Command",
       "infra-sqs":      "UserSqsMessage (JSON) ↔ Core Domain / Command",
@@ -77,7 +78,9 @@
   "interfaceRules": {
     "core.ports.in":    { "useInterface": true,  "reason": "Inbound port contract — use case boundary" },
     "core.ports.out":   { "useInterface": true,  "reason": "Outbound port contract — dependency inversion" },
-    "infra-api":        { "useInterface": false, "reason": "Controllers triggered by framework, never injected" },
+    "infra-api-rest":       { "useInterface": false, "reason": "Controllers triggered by framework, never injected" },
+    "infra-api-websocket":  { "useInterface": false, "reason": "Controllers triggered by framework, never injected" },
+    "infra-api-grpc":       { "useInterface": false, "reason": "GrpcService triggered by framework, never injected" },
     "infra-kafka":      { "useInterface": false, "reason": "Listeners triggered by framework, never injected" },
     "infra-* outbound": { "useInterface": false, "reason": "Adapters implement core Port directly — no extra interface" }
   },

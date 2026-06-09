@@ -12,7 +12,9 @@ O projeto utiliza uma **Arquitetura Hexagonal Simplificada** estruturada em form
 
 ### Mapa de Módulos na Raiz:
 * `core`: Contém as regras de negócio puras (Java Standard).
-* `infra-api`: Porta de entrada da aplicação (REST, gRPC, SOAP, etc.).
+* `infra-api-rest`: Porta de entrada REST (Controllers + DTOs). Spring Web MVC + MapStruct.
+* `infra-api-websocket`: Porta de entrada WebSocket (STOMP). Spring WebSocket + Springwolf.
+* `infra-api-grpc`: Porta de entrada gRPC (Protocol Buffers). net.devh gRPC Starter + MapStruct ADDER_PREFERRED.
 * `infra-kafka`: Ecossistema de mensageria assíncrona com Kafka (Avro + Confluent Schema Registry).
 * `infra-sqs`: Consumer e publisher AWS SQS (`@SqsListener`). Profile: `sqs`.
 * `infra-sns`: Publisher fan-out AWS SNS. Profile: `sns`.
@@ -44,7 +46,8 @@ Você deve aplicar os seguintes sufixos com precisão cirúrgica baseado no pape
 | **Implementação do Caso de Uso** | `core` (`usecase`) | `UseCaseImpl` | `CreateUserUseCaseImpl` |
 | **Interface de Porta de Saída** | `core` (`ports.out`) | `Port` | `UserRepositoryPort` |
 | **Implementação de Porta de Saída** | `infra-*` (Outbound) | `Adapter` | `UserRepositoryAdapter` |
-| **Controles/Endpoints HTTP** | `infra-api` (Inbound) | `Controller` | `UserController` |
+| **Controles/Endpoints HTTP** | `infra-api-rest` (Inbound) | `Controller` | `UserController` |
+| **Serviços gRPC** | `infra-api-grpc` (Inbound) | `GrpcService` | `UserGrpcService` |
 | **Escutadores de Mensageria** | `infra-kafka` (Inbound) | `Listener`              | `UserEventListener`  |
 | **Escutadores de Mensageria** | `infra-sqs` (Inbound)  | `Listener`              | `UserSqsListener`    |
 | **Publishers de Mensageria**  | `infra-sqs` / `infra-sns` | `Publisher` / `NoOp*Publisher` | `UserSqsPublisher`, `NoOpUserQueuePublisher` |
@@ -55,7 +58,9 @@ Você deve aplicar os seguintes sufixos com precisão cirúrgica baseado no pape
 
 1. **Localização dos Mappers:** O módulo `core` não sabe da existência de mappers. Todos os mappers do **MapStruct** devem residir obrigatoriamente dentro dos seus respectivos módulos de infraestrutura (`infra-*`), no pacote `mapper`.
 2. **Propriedade da Camada:** Cada adaptador é dono do seu próprio mapeador:
-   * `infra-api` mapeia: `Request/Response DTO` ⇄ `Core Domain`
+   * `infra-api-rest`      mapeia: `Request/Response DTO` ⇄ `Core Domain / Command`
+   * `infra-api-websocket` mapeia: `Domain` → `WebSocket Event DTO`
+   * `infra-api-grpc`      mapeia: `Proto messages` ⇄ `Core Domain / Command` (`@Mapper ADDER_PREFERRED + unmappedTargetPolicy=IGNORE`; source presence checkers detectam `hasXxx()` de campos proto3 optional automaticamente)
    * `infra-postgres` mapeia: `Core Domain` ⇄ `JPA Entity`
    * `infra-mariadb` mapeia: `Core Domain` ⇄ `JPA Entity`
    * `infra-kafka` mapeia: `Event Payload (Avro)` ⇄ `Core Domain / Command`
@@ -70,7 +75,7 @@ Você deve aplicar os seguintes sufixos com precisão cirúrgica baseado no pape
 Não crie interfaces de forma indiscriminada. Siga a regra padrão do ecossistema:
 
 * **Inbound/Outbound Ports no `core`:** **Sempre usar interfaces**. Elas são os contratos que definem as fronteiras do hexágono.
-* **Inbound Adapters (`infra-api`, `infra-kafka`):** **Nunca usar interfaces**. Classes como `UserController` e `UserEventListener` devem ser concretas, pois são gerenciadas diretamente pelos gatilhos do framework e ninguém as injeta.
+* **Inbound Adapters (`infra-api-rest`, `infra-api-websocket`, `infra-api-grpc`, `infra-kafka`):** **Nunca usar interfaces**. Classes como `UserController`, `UserGrpcService` e `UserEventListener` devem ser concretas, pois são gerenciadas diretamente pelos gatilhos do framework e ninguém as injeta.
 * **Outbound Adapters (`infra-postgres`, `infra-valkey`, etc.):** **Nunca usar interfaces manuais extras**. A classe `UserRepositoryAdapter` é uma classe concreta que implementa diretamente a `UserRepositoryPort` do core.
 
 ---
@@ -84,7 +89,7 @@ Sempre que o usuário solicitar uma nova funcionalidade, siga rigorosamente esta
 3. **`core` (ports.in):** Crie a interface `*UseCase`.
 4. **`core` (usecase):** Crie a classe concreta `*UseCaseImpl` anotada com `@Named`, contendo apenas um construtor limpo (sem `@Inject`).
 5. **`infra-*` (outbound):** Implemente os adaptadores correspondentes (banco, cache, etc.) usando as anotações nativas do Spring (ex: `@Repository`) e com o sufixo `Adapter`. Crie também seus respectivos mappers do MapStruct no pacote `mapper`.
-6. **`infra-api`, `infra-kafka`, `infra-sqs` ou `infra-sns` (inbound/outbound):** Crie a classe concreta de entrada (`Controller` ou `*Listener`) injetando a interface do Caso de Uso do Core via construtor implícito. Para SQS/SNS, crie também `*Publisher` (`@Profile`) e `NoOp*Publisher` (`@ConditionalOnMissingBean`) como fallback.
+6. **`infra-api-rest`, `infra-api-websocket`, `infra-api-grpc`, `infra-kafka`, `infra-sqs` ou `infra-sns` (inbound/outbound):** Crie a classe concreta de entrada (`*Controller`, `*GrpcService` ou `*Listener`) injetando a interface do Caso de Uso do Core via construtor implícito. Para SQS/SNS, crie também `*Publisher` (`@Profile`) e `NoOp*Publisher` (`@ConditionalOnMissingBean`) como fallback.
 
 Se houver violação de qualquer uma dessas diretrizes, pare a geração imediatamente e alerte o usuário sobre a inconsistência arquitetural.
 
