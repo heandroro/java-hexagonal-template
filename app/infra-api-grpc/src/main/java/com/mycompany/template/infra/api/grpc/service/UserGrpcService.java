@@ -7,7 +7,7 @@ import com.mycompany.template.core.ports.in.FindUserUseCase;
 import com.mycompany.template.core.ports.in.ListUsersUseCase;
 import com.mycompany.template.core.ports.in.PatchUserUseCase;
 import com.mycompany.template.core.ports.in.UpdateUserUseCase;
-import com.mycompany.template.infra.api.grpc.converter.UserProtoConverter;
+import com.mycompany.template.infra.api.grpc.mapper.UserProtoMapper;
 import com.mycompany.template.infra.api.grpc.proto.CreateUserRequest;
 import com.mycompany.template.infra.api.grpc.proto.ListUsersRequest;
 import com.mycompany.template.infra.api.grpc.proto.ListUsersProtoResponse;
@@ -30,54 +30,57 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
     private final UpdateUserUseCase updateUserUseCase;
     private final PatchUserUseCase patchUserUseCase;
     private final DeleteUserUseCase deleteUserUseCase;
+    private final UserProtoMapper userProtoMapper;
 
     UserGrpcService(CreateUserUseCase createUserUseCase,
                     FindUserUseCase findUserUseCase,
                     ListUsersUseCase listUsersUseCase,
                     UpdateUserUseCase updateUserUseCase,
                     PatchUserUseCase patchUserUseCase,
-                    DeleteUserUseCase deleteUserUseCase) {
+                    DeleteUserUseCase deleteUserUseCase,
+                    UserProtoMapper userProtoMapper) {
         this.createUserUseCase = createUserUseCase;
         this.findUserUseCase = findUserUseCase;
         this.listUsersUseCase = listUsersUseCase;
         this.updateUserUseCase = updateUserUseCase;
         this.patchUserUseCase = patchUserUseCase;
         this.deleteUserUseCase = deleteUserUseCase;
+        this.userProtoMapper = userProtoMapper;
     }
 
     @Override
     public void createUser(CreateUserRequest request, StreamObserver<UserProtoResponse> responseObserver) {
-        var user = createUserUseCase.execute(UserProtoConverter.toCommand(request));
-        responseObserver.onNext(UserProtoConverter.toProtoResponse(user));
+        var user = createUserUseCase.execute(userProtoMapper.toCommand(request));
+        responseObserver.onNext(userProtoMapper.toProtoResponse(user));
         responseObserver.onCompleted();
     }
 
     @Override
     public void findUser(UserByIdRequest request, StreamObserver<UserProtoResponse> responseObserver) {
         var user = findUserUseCase.execute(UUID.fromString(request.getId()));
-        responseObserver.onNext(UserProtoConverter.toProtoResponse(user));
+        responseObserver.onNext(userProtoMapper.toProtoResponse(user));
         responseObserver.onCompleted();
     }
 
     @Override
     public void listUsers(ListUsersRequest request, StreamObserver<ListUsersProtoResponse> responseObserver) {
         var page = listUsersUseCase.execute(request.getPage(), request.getSize());
-        responseObserver.onNext(UserProtoConverter.toProtoListResponse(page));
+        responseObserver.onNext(userProtoMapper.toProtoListResponse(page));
         responseObserver.onCompleted();
     }
 
     @Override
     public void updateUser(UpdateUserRequest request, StreamObserver<UserProtoResponse> responseObserver) {
-        var user = updateUserUseCase.execute(UUID.fromString(request.getId()), UserProtoConverter.toCommand(request));
-        responseObserver.onNext(UserProtoConverter.toProtoResponse(user));
+        var user = updateUserUseCase.execute(UUID.fromString(request.getId()), userProtoMapper.toCommand(request));
+        responseObserver.onNext(userProtoMapper.toProtoResponse(user));
         responseObserver.onCompleted();
     }
 
     @Override
     public void patchUser(PatchUserRequest request, StreamObserver<UserProtoResponse> responseObserver) {
         var user = patchUserUseCase.execute(UUID.fromString(request.getId()),
-                UserProtoConverter.toPatchCommand(request));
-        responseObserver.onNext(UserProtoConverter.toProtoResponse(user));
+                userProtoMapper.toPatchCommand(request));
+        responseObserver.onNext(userProtoMapper.toProtoResponse(user));
         responseObserver.onCompleted();
     }
 

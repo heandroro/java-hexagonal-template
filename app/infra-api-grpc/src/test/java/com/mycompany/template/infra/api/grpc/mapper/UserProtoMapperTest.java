@@ -1,4 +1,4 @@
-package com.mycompany.template.infra.api.grpc.converter;
+package com.mycompany.template.infra.api.grpc.mapper;
 
 import com.mycompany.template.core.command.CreateUserCommand;
 import com.mycompany.template.core.command.PatchUserCommand;
@@ -15,13 +15,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class UserProtoConverterTest {
+class UserProtoMapperTest {
+
+    private final UserProtoMapper mapper = new UserProtoMapperImpl();
 
     @Test
     void toProtoResponse_shouldMapAllFields() {
         var user = Instancio.create(User.class);
 
-        UserProtoResponse response = UserProtoConverter.toProtoResponse(user);
+        UserProtoResponse response = mapper.toProtoResponse(user);
 
         assertThat(response.getId()).isEqualTo(user.id().toString());
         assertThat(response.getName()).isEqualTo(user.name());
@@ -34,7 +36,7 @@ class UserProtoConverterTest {
         var users = Instancio.createList(User.class);
         var page = new UserPage(users, users.size(), 1, 0, users.size());
 
-        ListUsersProtoResponse response = UserProtoConverter.toProtoListResponse(page);
+        ListUsersProtoResponse response = mapper.toProtoListResponse(page);
 
         assertThat(response.getTotalElements()).isEqualTo(users.size());
         assertThat(response.getTotalPages()).isEqualTo(1);
@@ -45,12 +47,9 @@ class UserProtoConverterTest {
 
     @Test
     void toCommand_createUser_shouldMapNameAndEmail() {
-        var request = CreateUserRequest.newBuilder()
-                .setName("Alice")
-                .setEmail("alice@example.com")
-                .build();
+        var request = CreateUserRequest.newBuilder().setName("Alice").setEmail("alice@example.com").build();
 
-        CreateUserCommand command = UserProtoConverter.toCommand(request);
+        CreateUserCommand command = mapper.toCommand(request);
 
         assertThat(command.name()).isEqualTo("Alice");
         assertThat(command.email()).isEqualTo("alice@example.com");
@@ -59,12 +58,9 @@ class UserProtoConverterTest {
     @Test
     void toCommand_updateUser_shouldMapNameAndEmail() {
         var request = UpdateUserRequest.newBuilder()
-                .setId("some-id")
-                .setName("Bob")
-                .setEmail("bob@example.com")
-                .build();
+                .setId("some-id").setName("Bob").setEmail("bob@example.com").build();
 
-        UpdateUserCommand command = UserProtoConverter.toCommand(request);
+        UpdateUserCommand command = mapper.toCommand(request);
 
         assertThat(command.name()).isEqualTo("Bob");
         assertThat(command.email()).isEqualTo("bob@example.com");
@@ -72,12 +68,9 @@ class UserProtoConverterTest {
 
     @Test
     void toPatchCommand_shouldMapPresentFields() {
-        var request = PatchUserRequest.newBuilder()
-                .setId("some-id")
-                .setName("Patched")
-                .build();
+        var request = PatchUserRequest.newBuilder().setId("some-id").setName("Patched").build();
 
-        PatchUserCommand command = UserProtoConverter.toPatchCommand(request);
+        PatchUserCommand command = mapper.toPatchCommand(request);
 
         assertThat(command.name()).isEqualTo("Patched");
         assertThat(command.email()).isNull();
@@ -85,11 +78,9 @@ class UserProtoConverterTest {
 
     @Test
     void toPatchCommand_shouldSetNullForAbsentFields() {
-        var request = PatchUserRequest.newBuilder()
-                .setId("some-id")
-                .build();
+        var request = PatchUserRequest.newBuilder().setId("some-id").build();
 
-        PatchUserCommand command = UserProtoConverter.toPatchCommand(request);
+        PatchUserCommand command = mapper.toPatchCommand(request);
 
         assertThat(command.name()).isNull();
         assertThat(command.email()).isNull();
@@ -97,12 +88,9 @@ class UserProtoConverterTest {
 
     @Test
     void toPatchCommand_shouldMapPresentEmailWithAbsentName() {
-        var request = PatchUserRequest.newBuilder()
-                .setId("some-id")
-                .setEmail("updated@example.com")
-                .build();
+        var request = PatchUserRequest.newBuilder().setId("some-id").setEmail("updated@example.com").build();
 
-        PatchUserCommand command = UserProtoConverter.toPatchCommand(request);
+        PatchUserCommand command = mapper.toPatchCommand(request);
 
         assertThat(command.name()).isNull();
         assertThat(command.email()).isEqualTo("updated@example.com");
