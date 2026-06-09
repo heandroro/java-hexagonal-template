@@ -33,5 +33,5 @@ public interface UserProtoMapper {
 
     UpdateUserCommand toCommand(UpdateUserRequest request);
 
-    PatchUserCommand toPatchCommand(PatchUserRequest request);
+    PatchUserCommand toCommand(PatchUserRequest request);
 }

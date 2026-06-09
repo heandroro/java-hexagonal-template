@@ -79,7 +79,7 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
     @Override
     public void patchUser(PatchUserRequest request, StreamObserver<UserProtoResponse> responseObserver) {
         var user = patchUserUseCase.execute(UUID.fromString(request.getId()),
-                userProtoMapper.toPatchCommand(request));
+                userProtoMapper.toCommand(request));
         responseObserver.onNext(userProtoMapper.toProtoResponse(user));
         responseObserver.onCompleted();
     }

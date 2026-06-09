@@ -67,30 +67,30 @@ class UserProtoMapperTest {
     }
 
     @Test
-    void toPatchCommand_shouldMapPresentFields() {
+    void toCommand_patch_shouldMapPresentFields() {
         var request = PatchUserRequest.newBuilder().setId("some-id").setName("Patched").build();
 
-        PatchUserCommand command = mapper.toPatchCommand(request);
+        PatchUserCommand command = mapper.toCommand(request);
 
         assertThat(command.name()).isEqualTo("Patched");
         assertThat(command.email()).isNull();
     }
 
     @Test
-    void toPatchCommand_shouldSetNullForAbsentFields() {
+    void toCommand_patch_shouldSetNullForAbsentFields() {
         var request = PatchUserRequest.newBuilder().setId("some-id").build();
 
-        PatchUserCommand command = mapper.toPatchCommand(request);
+        PatchUserCommand command = mapper.toCommand(request);
 
         assertThat(command.name()).isNull();
         assertThat(command.email()).isNull();
     }
 
     @Test
-    void toPatchCommand_shouldMapPresentEmailWithAbsentName() {
+    void toCommand_patch_shouldMapPresentEmailWithAbsentName() {
         var request = PatchUserRequest.newBuilder().setId("some-id").setEmail("updated@example.com").build();
 
-        PatchUserCommand command = mapper.toPatchCommand(request);
+        PatchUserCommand command = mapper.toCommand(request);
 
         assertThat(command.name()).isNull();
         assertThat(command.email()).isEqualTo("updated@example.com");

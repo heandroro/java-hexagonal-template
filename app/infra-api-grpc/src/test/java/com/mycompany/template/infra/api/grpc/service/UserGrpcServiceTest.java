@@ -142,7 +142,7 @@ class UserGrpcServiceTest {
         @SuppressWarnings("unchecked")
         var observer = mock(StreamObserver.class);
 
-        given(userProtoMapper.toPatchCommand(request)).willReturn(command);
+        given(userProtoMapper.toCommand(request)).willReturn(command);
         given(patchUserUseCase.execute(id, command)).willReturn(user);
         given(userProtoMapper.toProtoResponse(user)).willReturn(protoResp);
 
