@@ -33,10 +33,5 @@ public interface UserProtoMapper {
 
     UpdateUserCommand toCommand(UpdateUserRequest request);
 
-    default PatchUserCommand toPatchCommand(PatchUserRequest request) {
-        return new PatchUserCommand(
-                request.hasName() ? request.getName() : null,
-                request.hasEmail() ? request.getEmail() : null
-        );
-    }
+    PatchUserCommand toPatchCommand(PatchUserRequest request);
 }
