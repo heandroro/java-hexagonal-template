@@ -78,8 +78,8 @@ java -jar app/application/target/application-1.0.0-SNAPSHOT.jar
 | JaCoCo coverage | `mvn verify` | ≥ 90% lines + branches per module |
 | Checkstyle | `mvn verify` | zero violations (line ≤ 120, imports, braces) |
 | ArchUnit (19 rules) | `mvn verify` | zero architectural violations |
-| SpotBugs | `mvn spotbugs:check` (JDK ≤ 23) | threshold High |
-| PMD | `mvn pmd:check` (JDK ≤ 23) | cyclomatic complexity ≤ 15 |
+| SpotBugs | `mvn verify` | threshold High |
+| PMD | `mvn verify` | cyclomatic complexity ≤ 15 |
 
 ## Architecture Rules
 

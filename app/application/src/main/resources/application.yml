@@ -85,3 +85,23 @@ management:
 
 server:
   port: 8080
+
+springwolf:
+  enabled: true
+  docket:
+    base-package: com.mycompany.template.infra.api
+    info:
+      title: "java-hexagonal-template Async API"
+      version: "1.0.0-SNAPSHOT"
+      description: "STOMP over WebSocket — real-time user channels"
+    servers:
+      ws-stomp:
+        protocol: stomp
+        host: ws://localhost:8080/ws
+  plugin:
+    stomp:
+      scanner:
+        stomp-message-mapping:
+          enabled: true
+        stomp-send-to:
+          enabled: true

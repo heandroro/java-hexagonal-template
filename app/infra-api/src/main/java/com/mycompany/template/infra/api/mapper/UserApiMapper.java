@@ -8,6 +8,7 @@ import com.mycompany.template.infra.api.dto.CreateUserRequest;
 import com.mycompany.template.infra.api.dto.PatchUserRequest;
 import com.mycompany.template.infra.api.dto.UpdateUserRequest;
 import com.mycompany.template.infra.api.dto.UserResponse;
+import com.mycompany.template.infra.api.dto.UserWebSocketEvent;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
@@ -21,6 +22,10 @@ public interface UserApiMapper {
     UserResponse toResponse(User user);
 
     List<UserResponse> toResponseList(List<User> users);
+
+    UserWebSocketEvent toWebSocketEvent(User user);
+
+    List<UserWebSocketEvent> toWebSocketEventList(List<User> users);
 
     CreateUserCommand toCommand(CreateUserRequest request);
 
