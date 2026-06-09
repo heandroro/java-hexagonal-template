@@ -1,4 +1,4 @@
-package com.mycompany.template.infra.api.grpc.mapper;
+package com.mycompany.template.infra.api.grpc.converter;
 
 import com.mycompany.template.core.command.CreateUserCommand;
 import com.mycompany.template.core.command.PatchUserCommand;
@@ -15,15 +15,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class UserGrpcMapperTest {
-
-    private final UserGrpcMapper mapper = new UserGrpcMapper() { };
+class UserProtoConverterTest {
 
     @Test
     void toProtoResponse_shouldMapAllFields() {
         var user = Instancio.create(User.class);
 
-        UserProtoResponse response = mapper.toProtoResponse(user);
+        UserProtoResponse response = UserProtoConverter.toProtoResponse(user);
 
         assertThat(response.getId()).isEqualTo(user.id().toString());
         assertThat(response.getName()).isEqualTo(user.name());
@@ -36,7 +34,7 @@ class UserGrpcMapperTest {
         var users = Instancio.createList(User.class);
         var page = new UserPage(users, users.size(), 1, 0, users.size());
 
-        ListUsersProtoResponse response = mapper.toProtoListResponse(page);
+        ListUsersProtoResponse response = UserProtoConverter.toProtoListResponse(page);
 
         assertThat(response.getTotalElements()).isEqualTo(users.size());
         assertThat(response.getTotalPages()).isEqualTo(1);
@@ -52,7 +50,7 @@ class UserGrpcMapperTest {
                 .setEmail("alice@example.com")
                 .build();
 
-        CreateUserCommand command = mapper.toCommand(request);
+        CreateUserCommand command = UserProtoConverter.toCommand(request);
 
         assertThat(command.name()).isEqualTo("Alice");
         assertThat(command.email()).isEqualTo("alice@example.com");
@@ -66,7 +64,7 @@ class UserGrpcMapperTest {
                 .setEmail("bob@example.com")
                 .build();
 
-        UpdateUserCommand command = mapper.toCommand(request);
+        UpdateUserCommand command = UserProtoConverter.toCommand(request);
 
         assertThat(command.name()).isEqualTo("Bob");
         assertThat(command.email()).isEqualTo("bob@example.com");
@@ -79,7 +77,7 @@ class UserGrpcMapperTest {
                 .setName("Patched")
                 .build();
 
-        PatchUserCommand command = mapper.toPatchCommand(request);
+        PatchUserCommand command = UserProtoConverter.toPatchCommand(request);
 
         assertThat(command.name()).isEqualTo("Patched");
         assertThat(command.email()).isNull();
@@ -91,7 +89,7 @@ class UserGrpcMapperTest {
                 .setId("some-id")
                 .build();
 
-        PatchUserCommand command = mapper.toPatchCommand(request);
+        PatchUserCommand command = UserProtoConverter.toPatchCommand(request);
 
         assertThat(command.name()).isNull();
         assertThat(command.email()).isNull();
@@ -104,7 +102,7 @@ class UserGrpcMapperTest {
                 .setEmail("updated@example.com")
                 .build();
 
-        PatchUserCommand command = mapper.toPatchCommand(request);
+        PatchUserCommand command = UserProtoConverter.toPatchCommand(request);
 
         assertThat(command.name()).isNull();
         assertThat(command.email()).isEqualTo("updated@example.com");

@@ -7,7 +7,7 @@ import com.mycompany.template.core.ports.in.FindUserUseCase;
 import com.mycompany.template.core.ports.in.ListUsersUseCase;
 import com.mycompany.template.core.ports.in.PatchUserUseCase;
 import com.mycompany.template.core.ports.in.UpdateUserUseCase;
-import com.mycompany.template.infra.api.grpc.mapper.UserGrpcMapper;
+import com.mycompany.template.infra.api.grpc.converter.UserProtoConverter;
 import com.mycompany.template.infra.api.grpc.proto.CreateUserRequest;
 import com.mycompany.template.infra.api.grpc.proto.ListUsersRequest;
 import com.mycompany.template.infra.api.grpc.proto.ListUsersProtoResponse;
@@ -30,56 +30,54 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
     private final UpdateUserUseCase updateUserUseCase;
     private final PatchUserUseCase patchUserUseCase;
     private final DeleteUserUseCase deleteUserUseCase;
-    private final UserGrpcMapper userGrpcMapper;
 
     UserGrpcService(CreateUserUseCase createUserUseCase,
                     FindUserUseCase findUserUseCase,
                     ListUsersUseCase listUsersUseCase,
                     UpdateUserUseCase updateUserUseCase,
                     PatchUserUseCase patchUserUseCase,
-                    DeleteUserUseCase deleteUserUseCase,
-                    UserGrpcMapper userGrpcMapper) {
+                    DeleteUserUseCase deleteUserUseCase) {
         this.createUserUseCase = createUserUseCase;
         this.findUserUseCase = findUserUseCase;
         this.listUsersUseCase = listUsersUseCase;
         this.updateUserUseCase = updateUserUseCase;
         this.patchUserUseCase = patchUserUseCase;
         this.deleteUserUseCase = deleteUserUseCase;
-        this.userGrpcMapper = userGrpcMapper;
     }
 
     @Override
     public void createUser(CreateUserRequest request, StreamObserver<UserProtoResponse> responseObserver) {
-        var user = createUserUseCase.execute(userGrpcMapper.toCommand(request));
-        responseObserver.onNext(userGrpcMapper.toProtoResponse(user));
+        var user = createUserUseCase.execute(UserProtoConverter.toCommand(request));
+        responseObserver.onNext(UserProtoConverter.toProtoResponse(user));
         responseObserver.onCompleted();
     }
 
     @Override
     public void findUser(UserByIdRequest request, StreamObserver<UserProtoResponse> responseObserver) {
         var user = findUserUseCase.execute(UUID.fromString(request.getId()));
-        responseObserver.onNext(userGrpcMapper.toProtoResponse(user));
+        responseObserver.onNext(UserProtoConverter.toProtoResponse(user));
         responseObserver.onCompleted();
     }
 
     @Override
     public void listUsers(ListUsersRequest request, StreamObserver<ListUsersProtoResponse> responseObserver) {
         var page = listUsersUseCase.execute(request.getPage(), request.getSize());
-        responseObserver.onNext(userGrpcMapper.toProtoListResponse(page));
+        responseObserver.onNext(UserProtoConverter.toProtoListResponse(page));
         responseObserver.onCompleted();
     }
 
     @Override
     public void updateUser(UpdateUserRequest request, StreamObserver<UserProtoResponse> responseObserver) {
-        var user = updateUserUseCase.execute(UUID.fromString(request.getId()), userGrpcMapper.toCommand(request));
-        responseObserver.onNext(userGrpcMapper.toProtoResponse(user));
+        var user = updateUserUseCase.execute(UUID.fromString(request.getId()), UserProtoConverter.toCommand(request));
+        responseObserver.onNext(UserProtoConverter.toProtoResponse(user));
         responseObserver.onCompleted();
     }
 
     @Override
     public void patchUser(PatchUserRequest request, StreamObserver<UserProtoResponse> responseObserver) {
-        var user = patchUserUseCase.execute(UUID.fromString(request.getId()), userGrpcMapper.toPatchCommand(request));
-        responseObserver.onNext(userGrpcMapper.toProtoResponse(user));
+        var user = patchUserUseCase.execute(UUID.fromString(request.getId()),
+                UserProtoConverter.toPatchCommand(request));
+        responseObserver.onNext(UserProtoConverter.toProtoResponse(user));
         responseObserver.onCompleted();
     }
 

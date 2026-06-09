@@ -65,7 +65,7 @@
     "ownership": {
       "infra-api-rest":      "Request DTO → Command (core.command) / Domain → Response DTO",
       "infra-api-websocket": "Domain → WebSocket Event DTO",
-      "infra-api-grpc":      "Proto messages ↔ Core Domain / Command (default methods — proto builder pattern)",
+      "infra-api-grpc":      "Proto messages ↔ Core Domain / Command (UserProtoConverter — classe estática final, proto builder incompatível com MapStruct)",
       "infra-postgres": "Core Domain ↔ JPA Entity",
       "infra-kafka":    "UserEvent (Avro) ↔ Core Domain / Command",
       "infra-sqs":      "UserSqsMessage (JSON) ↔ Core Domain / Command",
@@ -96,6 +96,7 @@
     "app/infra-api-rest/src/main/java/com/mycompany/template/infra/api/rest/controller/UserController.java",
     "app/infra-api-websocket/src/main/java/com/mycompany/template/infra/api/websocket/controller/UserWebSocketController.java",
     "app/infra-api-grpc/src/main/java/com/mycompany/template/infra/api/grpc/service/UserGrpcService.java",
+    "app/infra-api-grpc/src/main/java/com/mycompany/template/infra/api/grpc/converter/UserProtoConverter.java",
     "app/infra-api-grpc/src/main/proto/user_service.proto",
     "AGENTS.md",
     "config/checkstyle/checkstyle.xml",
