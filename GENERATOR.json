@@ -102,7 +102,7 @@
     },
     {
       "id": "httpInbound",
-      "prompt": "Quais protocolos de entrada HTTP você precisa? (múltipla escolha)",
+      "prompt": "Quais protocolos de entrada você precisa? (múltipla escolha)",
       "multiSelect": true,
       "options": [
         {
