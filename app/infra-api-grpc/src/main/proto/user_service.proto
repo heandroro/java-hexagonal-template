@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package com.mycompany.template.infra.api.grpc;
+
+option java_package = "com.mycompany.template.infra.api.grpc.proto";
+option java_outer_classname = "UserServiceProto";
+option java_multiple_files = true;
+
+import "google/protobuf/empty.proto";
+
+service UserService {
+  rpc CreateUser (CreateUserRequest)   returns (UserProtoResponse);
+  rpc FindUser   (UserByIdRequest)     returns (UserProtoResponse);
+  rpc ListUsers  (ListUsersRequest)    returns (ListUsersProtoResponse);
+  rpc UpdateUser (UpdateUserRequest)   returns (UserProtoResponse);
+  rpc PatchUser  (PatchUserRequest)    returns (UserProtoResponse);
+  rpc DeleteUser (UserByIdRequest)     returns (google.protobuf.Empty);
+}
+
+message CreateUserRequest {
+  string name  = 1;
+  string email = 2;
+}
+
+message UpdateUserRequest {
+  string id    = 1;
+  string name  = 2;
+  string email = 3;
+}
+
+message PatchUserRequest {
+  string          id    = 1;
+  optional string name  = 2;
+  optional string email = 3;
+}
+
+message UserByIdRequest {
+  string id = 1;
+}
+
+message ListUsersRequest {
+  int32 page = 1;
+  int32 size = 2;
+}
+
+message UserProtoResponse {
+  string id         = 1;
+  string name       = 2;
+  string email      = 3;
+  string created_at = 4;
+}
+
+message ListUsersProtoResponse {
+  repeated UserProtoResponse users          = 1;
+  int64                      total_elements = 2;
+  int32                      total_pages    = 3;
+  int32                      page_number    = 4;
+  int32                      page_size      = 5;
+}

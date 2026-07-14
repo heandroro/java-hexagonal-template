@@ -26,10 +26,10 @@ All starters below inherit their version from `spring-boot-dependencies` `3.5.0`
 
 | Artifact | Used in module(s) | Notes |
 |---|---|---|
-| `spring-boot-starter-web` | `infra-api` | Spring Web MVC |
-| `spring-boot-starter-websocket` | `infra-api` | STOMP over SockJS |
-| `spring-boot-starter-validation` | `infra-api` | Bean Validation (Jakarta) |
-| `spring-data-commons` | `infra-api` | `Pageable` / `Page` types |
+| `spring-boot-starter-web` | `infra-api-rest` | Spring Web MVC |
+| `spring-boot-starter-websocket` | `infra-api-websocket` | STOMP over SockJS |
+| `spring-boot-starter-validation` | `infra-api-rest` | Bean Validation (Jakarta) |
+| `spring-data-commons` | `infra-api-rest` | `Pageable` / `Page` types |
 | `spring-boot-starter-data-jpa` | `infra-postgres`, `infra-mariadb` | Hibernate + Spring Data JPA |
 | `spring-boot-starter-data-redis` | `infra-valkey` | Spring Data Redis (Valkey-compatible) |
 | `spring-kafka` | `infra-kafka` | Spring Kafka consumer / producer |
@@ -78,9 +78,22 @@ All starters below inherit their version from `spring-boot-dependencies` `3.5.0`
 
 | Artifact | Version | Used in module(s) | Notes |
 |---|---|---|---|
-| `springdoc-openapi-starter-webmvc-ui` | **2.8.4** | `infra-api` | OpenAPI 3 + Swagger UI |
-| `springwolf-stomp` | **1.13.0** | `infra-api` | AsyncAPI documentation for STOMP/WebSocket channels |
-| `springwolf-ui` | **1.13.0** | `infra-api` | Springwolf web UI |
+| `springdoc-openapi-starter-webmvc-ui` | **2.8.4** | `infra-api-rest` | OpenAPI 3 + Swagger UI |
+| `springwolf-stomp` | **1.13.0** | `infra-api-websocket` | AsyncAPI documentation for STOMP/WebSocket channels |
+| `springwolf-ui` | **1.13.0** | `infra-api-websocket` | Springwolf web UI |
+
+---
+
+## gRPC
+
+| Artifact | Version | Used in module(s) | Notes |
+|---|---|---|---|
+| `grpc-server-spring-boot-starter` (net.devh) | **3.1.0.RELEASE** | `infra-api-grpc` | gRPC server + Spring DI integration |
+| `protobuf-java` (com.google.protobuf) | **3.25.5** | `infra-api-grpc` | Protocol Buffers runtime |
+| `javax.annotation-api` | **1.3.2** | `infra-api-grpc` | `@javax.annotation.Generated` — ausente no JDK 9+ |
+| `protobuf-maven-plugin` (io.github.ascopes) | **3.1.0** | `infra-api-grpc` | Gera sources .proto; usa `protocVersion` + `binaryMavenPlugins` |
+
+> **Plugin config:** `protocVersion = 3.25.5`, `binaryMavenPlugin = io.grpc:protoc-gen-grpc-java:1.64.0`. Fontes em `src/main/proto`, output em `target/generated-sources/protobuf`.
 
 ---
 
@@ -191,17 +204,18 @@ Legenda:
 
 Quick reference for selective upgrades — which module is affected by each key dependency.
 
-| Dependency | core | infra-api | infra-kafka | infra-postgres | infra-mariadb | infra-valkey | infra-dynamodb | infra-sqs | infra-sns | infra-client-api | application |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Spring Boot BOM | — | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Spring Cloud BOM (2025.0.0) | — | — | — | — | — | — | — | — | — | ✓ | — |
-| Spring Cloud AWS BOM (3.4.0) | — | — | — | — | — | — | ✓ | ✓ | ✓ | — | — |
-| MapStruct 1.6.3 | — | ✓ | ✓ | ✓ | ✓ | — | ✓ | ✓ | ✓ | — | — |
-| Lombok 1.18.40 | — | — | — | ✓ | ✓ | — | — | — | — | — | — |
-| Jakarta Inject 2.0.1 | ✓ | — | — | — | — | — | — | — | — | — | — |
-| Confluent / Avro 7.9.1 / 1.12.1 | — | — | ✓ | — | — | — | — | — | — | — | — |
-| SpringDoc 2.8.4 | — | ✓ | — | — | — | — | — | — | — | — | — |
-| Springwolf 1.13.0 | — | ✓ | — | — | — | — | — | — | — | — | — |
-| Testcontainers 1.21.4 | — | — | — | ✓ | ✓ | — | — | — | — | — | ✓ |
-| Instancio 5.6.0 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | — |
-| ArchUnit 1.4.1 | — | — | — | — | — | — | — | — | — | — | ✓ |
+| Dependency | core | infra-api-rest | infra-api-websocket | infra-api-grpc | infra-kafka | infra-postgres | infra-mariadb | infra-valkey | infra-dynamodb | infra-sqs | infra-sns | infra-client-api | application |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Spring Boot BOM | — | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Spring Cloud BOM (2025.0.0) | — | — | — | — | — | — | — | — | — | — | — | ✓ | — |
+| Spring Cloud AWS BOM (3.4.0) | — | — | — | — | — | — | — | — | ✓ | ✓ | ✓ | — | — |
+| MapStruct 1.6.3 | — | ✓ | — | ✓ | ✓ | ✓ | ✓ | — | ✓ | ✓ | ✓ | — | — |
+| Lombok 1.18.40 | — | — | — | — | — | ✓ | ✓ | — | — | — | — | — | — |
+| Jakarta Inject 2.0.1 | ✓ | — | — | — | — | — | — | — | — | — | — | — | — |
+| Confluent / Avro 7.9.1 / 1.12.1 | — | — | — | — | ✓ | — | — | — | — | — | — | — | — |
+| SpringDoc 2.8.4 | — | ✓ | — | — | — | — | — | — | — | — | — | — | — |
+| Springwolf 1.13.0 | — | — | ✓ | — | — | — | — | — | — | — | — | — | — |
+| gRPC / Protobuf 3.25.5 | — | — | — | ✓ | — | — | — | — | — | — | — | — | — |
+| Testcontainers 1.21.4 | — | — | — | — | — | ✓ | ✓ | — | — | — | — | — | ✓ |
+| Instancio 5.6.0 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | — |
+| ArchUnit 1.4.1 | — | — | — | — | — | — | — | — | — | — | — | — | ✓ |

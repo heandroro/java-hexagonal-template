@@ -21,7 +21,15 @@
         <!-- All infrastructure modules -->
         <dependency>
             <groupId>com.mycompany.template</groupId>
-            <artifactId>infra-api</artifactId>
+            <artifactId>infra-api-rest</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mycompany.template</groupId>
+            <artifactId>infra-api-websocket</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mycompany.template</groupId>
+            <artifactId>infra-api-grpc</artifactId>
         </dependency>
         <dependency>
             <groupId>com.mycompany.template</groupId>
