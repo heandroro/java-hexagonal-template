@@ -19,4 +19,9 @@ public class UserGrpcExceptionHandler {
     public StatusRuntimeException handleUserAlreadyExists(UserAlreadyExistsException ex) {
         return Status.ALREADY_EXISTS.withDescription(ex.getMessage()).asRuntimeException();
     }
+
+    @GrpcExceptionHandler(IllegalArgumentException.class)
+    public StatusRuntimeException handleIllegalArgument(IllegalArgumentException ex) {
+        return Status.INVALID_ARGUMENT.withDescription(ex.getMessage()).asRuntimeException();
+    }
 }

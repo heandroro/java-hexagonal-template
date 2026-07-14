@@ -3,7 +3,7 @@
   "includeWhen": "httpInbound includes grpc",
   "packages": {
     "infra.api.grpc.service": "gRPC service implementations (*GrpcService) — extends generated ImplBase, no extra interface",
-    "infra.api.grpc.mapper":  "@Mapper(ADDER_PREFERRED) — proto messages ↔ Core Domain/Command; toPatchCommand é default method por semântica proto3 optional",
+    "infra.api.grpc.mapper":  "@Mapper(ADDER_PREFERRED) — proto messages ↔ Core Domain/Command; proto3 optional fields handled via hasXxx() source presence checkers (no manual default methods needed)",
     "infra.api.grpc.handler": "@GrpcAdvice — maps core exceptions to gRPC Status codes",
     "infra.api.grpc.proto":   "Generated Protocol Buffer message + service stub classes (build-time)"
   },

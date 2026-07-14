@@ -32,4 +32,14 @@ class UserGrpcExceptionHandlerTest {
         assertThat(result.getStatus().getCode()).isEqualTo(Status.ALREADY_EXISTS.getCode());
         assertThat(result.getStatus().getDescription()).isEqualTo(ex.getMessage());
     }
+
+    @Test
+    void handleIllegalArgument_shouldReturnInvalidArgumentStatus() {
+        var ex = new IllegalArgumentException("Invalid UUID string: invalid");
+
+        var result = handler.handleIllegalArgument(ex);
+
+        assertThat(result.getStatus().getCode()).isEqualTo(Status.INVALID_ARGUMENT.getCode());
+        assertThat(result.getStatus().getDescription()).isEqualTo(ex.getMessage());
+    }
 }

@@ -170,7 +170,7 @@
         "persistence": "postgres",
         "cache": "none",
         "messaging": ["none"],
-        "httpInbound": "rest",
+        "httpInbound": ["rest"],
         "httpOutbound": "none"
       },
       "modules": ["core", "infra-api-rest", "infra-postgres", "application"],
@@ -185,7 +185,7 @@
         "persistence": "postgres",
         "cache": "valkey",
         "messaging": ["none"],
-        "httpInbound": "rest",
+        "httpInbound": ["rest"],
         "httpOutbound": "none"
       },
       "modules": ["core", "infra-api-rest", "infra-postgres", "infra-valkey", "application"],
@@ -200,7 +200,7 @@
         "persistence": "postgres",
         "cache": "none",
         "messaging": ["none"],
-        "httpInbound": "rest",
+        "httpInbound": ["rest"],
         "httpOutbound": "feign"
       },
       "modules": ["core", "infra-api-rest", "infra-postgres", "infra-client-api", "application"],
@@ -215,7 +215,7 @@
         "persistence": "postgres",
         "cache": "none",
         "messaging": ["kafka"],
-        "httpInbound": "none",
+        "httpInbound": ["none"],
         "httpOutbound": "none"
       },
       "modules": ["core", "infra-kafka", "infra-postgres", "application"],
@@ -230,7 +230,7 @@
         "persistence": "postgres",
         "cache": "valkey",
         "messaging": ["kafka"],
-        "httpInbound": "rest",
+        "httpInbound": ["rest"],
         "httpOutbound": "none"
       },
       "modules": ["core", "infra-api-rest", "infra-postgres", "infra-valkey", "infra-kafka", "application"],
@@ -245,7 +245,7 @@
         "persistence": "dynamodb",
         "cache": "none",
         "messaging": ["sqs", "sns"],
-        "httpInbound": "rest",
+        "httpInbound": ["rest"],
         "httpOutbound": "none"
       },
       "modules": ["core", "infra-api-rest", "infra-dynamodb", "infra-sqs", "infra-sns", "application"],
